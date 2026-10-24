@@ -1,1578 +1,2355 @@
-<!DOCTYPE html>
-<!-- saved from url=(0036)https://poke-quiz-release.pages.dev/ -->
-<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex,nofollow">
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com/">
-  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
-    
-  <meta name="description" content="拡大表示されたポケモンの一部の画像からなんのポケモンか当ててみよう！" >
-
-  <meta property="og:type" content="website" >
-  <meta property="og:url" content="https://poke-quiz-release.pages.dev/" >
-  <meta property="og:title" content="パーツで当てる！ポケモンクイズ" >
-  <meta property="og:description" content="拡大表示されたポケモンの一部の画像からなんのポケモンか当ててみよう！" >
-  <meta property="og:image" content="https://poke-quiz-release.pages.dev/images/ogp.png" >
-  <meta property="og:site_name" content="パーツで当てる！ポケモンクイズ" >
-
-  <meta name="twitter:card" content="summary_large_image" >
-  <meta name="twitter:title" content="パーツで当てる！ポケモンクイズ" >
-  <meta name="twitter:description" content="拡大表示されたポケモンの一部の画像からなんのポケモンか当ててみよう！" >
-  <meta name="twitter:image" content="https://poke-quiz-release.pages.dev/images/ogp.png" >
-  
-  <title>パーツで当てる！ポケモンクイズ</title>
-  <style>
-    /* --- CSS変数定義（カラーパレット） --- */
-    :root {
-      /* 基本カラー */
-      --primary-color: #e63946;
-      --secondary-color: #ffcb05;
-      --accent-color: #2a75bb;
-      
-      /* 背景・カード・テキスト */
-      --bg-color: #f0f4f8;
-      --bg-pattern: #d1e1f0;
-      --card-bg: #ffffff;
-      --card-shadow: rgba(0, 0, 0, 0.12);
-      --text-main: #333333;
-      --text-muted: #555555;
-      --text-sub: #777777;
-
-      /* UIパーツ（通常モード） */
-      --border-color: #ddd;
-      --input-bg: #ffffff;
-      --howto-bg: #f8f9fa;
-      --howto-border: #e9ecef;
-      --howto-summary-hover: #f1f3f5;
-    }
-
-    /* ダークモード時の変数上書き */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-color: #121212;
-        --bg-pattern: rgba(255, 255, 255, 0.05);
-        --card-bg: #1e1e1e;
-        --card-shadow: rgba(0, 0, 0, 0.5);
-        --text-main: #e0e0e0;
-        --text-muted: #cccccc;
-        --text-sub: #aaaaaa;
-
-        --border-color: #444444;
-        --input-bg: #2a2a2a;
-        --howto-bg: #2c2c2c;
-        --howto-border: #444444;
-        --howto-summary-hover: #333333;
-      }
-    }
-
-    /* --- 全体レイアウト --- */
-    body {
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      background-color: var(--bg-color);
-      background-image: radial-gradient(var(--bg-pattern) 20%, transparent 20%), 
-                        radial-gradient(var(--bg-pattern) 20%, transparent 20%);
-      background-size: 20px 20px;
-      background-position: 0 0, 10px 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      min-height: 100dvh;
-      padding: 20px 0;
-      margin: 0;
-      box-sizing: border-box;
-      color: var(--text-main);
-    }
-
-    .card {
-      background: var(--card-bg);
-      padding: 2rem;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px var(--card-shadow);
-      text-align: center;
-      max-width: 460px;
-      width: 92%;
-      position: relative;
-      box-sizing: border-box;
-    }
-
-    h1, #pokemon-name-display, .score-badge {
-      font-family: 'DotGothic16', sans-serif;
-      letter-spacing: 2px;
-    }
-
-    h1 {
-      font-size: 1.6rem;
-      margin-top: 0;
-      margin-bottom: 1.2rem;
-    }
-
-    .hidden { display: none !important; }
-
-    /* --- 音量コントロール --- */
-    .volume-control {
-      position: absolute;
-      top: 3px;
-      right: 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(128, 128, 128, 0.1);
-      padding: 4px 8px;
-      border-radius: 20px;
-    }
-    .audio-toggle {
-      background: none;
-      border: none;
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-    }
-    #volume-slider {
-      width: 65px;
-      cursor: pointer;
-      accent-color: var(--accent-color);
-    }
-
-    /* --- フォーム群 --- */
-    .form-group {
-      margin-bottom: 1.1rem;
-      text-align: left;
-    }
-    label {
-      display: block;
-      font-weight: bold;
-      font-size: 0.88rem;
-      margin-bottom: 0.4rem;
-      color: var(--text-muted);
-    }
-    select, #answer-input {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 2px solid var(--border-color);
-      font-size: 0.95rem;
-      font-weight: bold;
-      background: var(--input-bg);
-      color: var(--text-main);
-      box-sizing: border-box;
-    }
-    #answer-input { text-align: center; }
-    #answer-input:focus {
-      border-color: var(--accent-color);
-      outline: none;
-    }
-
-    /* --- 出題範囲設定（囲み枠） --- */
-    .range-setting-box {
-      border: 2.5px solid var(--accent-color);
-      border-radius: 14px;
-      padding: 1rem;
-      margin-bottom: 1.1rem;
-      background: rgba(42, 117, 187, 0.04);
-      text-align: left;
-      position: relative;
-    }
-    .range-setting-header {
-      font-family: 'DotGothic16', sans-serif;
-      font-weight: bold;
-      font-size: 1.05rem;
-      color: var(--accent-color);
-      margin-bottom: 0.6rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border-bottom: 2px dashed rgba(42, 117, 187, 0.3);
-      padding-bottom: 0.4rem;
-      letter-spacing: 1px;
-    }
-    .range-setting-guide {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-bottom: 0.9rem;
-      background: var(--input-bg);
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      line-height: 1.5;
-    }
-    .range-setting-guide ul {
-      margin: 4px 0 0 0;
-      padding-left: 1.2rem;
-    }
-    .range-setting-guide li {
-      margin-bottom: 2px;
-    }
-
-    /* --- 地方複数選択チップUI --- */
-    .region-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.4rem;
-    }
-    .mini-btn-group {
-      display: flex;
-      gap: 6px;
-    }
-    .mini-btn {
-      background: var(--input-bg);
-      border: 1px solid var(--border-color);
-      color: var(--accent-color);
-      font-size: 0.72rem;
-      font-weight: bold;
-      padding: 3px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.1s;
-    }
-    .mini-btn:hover {
-      background: var(--howto-summary-hover);
-    }
-    .region-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-    }
-    .chip-checkbox {
-      position: relative;
-    }
-    .chip-checkbox input[type="checkbox"] {
-      position: absolute;
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .chip-label {
-      display: block;
-      padding: 8px 4px;
-      background: var(--input-bg);
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      text-align: center;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.15s ease;
-      color: var(--text-muted);
-    }
-    .chip-checkbox input[type="checkbox"]:checked + .chip-label {
-      background: rgba(42, 117, 187, 0.12);
-      border-color: var(--accent-color);
-      color: var(--accent-color);
-    }
-
-    /* 遊び方アコーディオン */
-    .howto-box {
-      background: var(--howto-bg);
-      border: 1px solid var(--howto-border);
-      border-radius: 10px;
-      margin-bottom: 1.2rem;
-      text-align: left;
-      overflow: hidden;
-    }
-    .howto-summary {
-      padding: 10px 14px;
-      font-weight: bold;
-      font-size: 0.9rem;
-      color: var(--accent-color);
-      cursor: pointer;
-      user-select: none;
-      outline: none;
-    }
-    .howto-summary:hover { background-color: var(--howto-summary-hover); }
-    .howto-content {
-      padding: 0 14px 12px 14px;
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-      border-top: 1px solid var(--howto-border);
-      margin-top: 4px;
-    }
-    .howto-content p { margin: 8px 0 4px 0; }
-    .howto-content ul { margin: 0; padding-left: 1.2rem; }
-    .howto-content li { margin-bottom: 4px; }
-
-    /* 注意書き・エラー表示 */
-    .sound-warning {
-      font-size: 0.8rem;
-      color: #d9534f;
-      text-align: center;
-      margin: 1.2rem 0 0.8rem 0;
-      font-weight: bold;
-      line-height: 1.4;
-    }
-    .error-msg {
-      color: #e63946;
-      font-size: 0.85rem;
-      font-weight: bold;
-      margin-top: 0.5rem;
-    }
-    @media (prefers-color-scheme: dark) {
-      .sound-warning { color: #ff6b6b; }
-      .error-msg { color: #ff6b6b; }
-    }
-
-    /* --- スコア・状態バッジ --- */
-    .quiz-header-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.6rem;
-      font-size: 0.9rem;
-      font-weight: bold;
-      color: var(--accent-color);
-    }
-    .score-badge {
-      background: rgba(42, 117, 187, 0.1);
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.95rem;
-    }
-
-    /* --- ボタン基本スタイル --- */
-    .main-btn {
-      background: linear-gradient(to bottom, #ff5e6d 0%, #e63946 100%);
-      color: white;
-      border: 1px solid #b32a35;
-      padding: 14px 20px;
-      border-radius: 10px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      width: 100%;
-      cursor: pointer;
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 5px 0 #b32a35, 0 8px 10px rgba(0, 0, 0, 0.2);
-      transition: all 0.1s;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-      position: relative;
-    }
-    .main-btn:hover { background: linear-gradient(to bottom, #ff7a87 0%, #d62839 100%); }
-    .main-btn:active {
-      transform: translateY(5px);
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 0px 0 #b32a35, 0 2px 3px rgba(0, 0, 0, 0.2);
-    }
-    .main-btn:disabled {
-      background: linear-gradient(to bottom, #e0e0e0 0%, #cccccc 100%);
-      border-color: #999;
-      color: #777;
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 5px 0 #999999;
-      text-shadow: none;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    /* キミに決めた！ボタン（リッチ） */
-    #submit-btn {
-      background: linear-gradient(to bottom, #ff4d4d 0%, #cc0000 100%);
-      text-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
-      border-color: #990000;
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 5px 0 #880000, 0 8px 10px rgba(0, 0, 0, 0.2);
-      margin-bottom: 0.8rem;
-    }
-    #submit-btn:hover { background: linear-gradient(to bottom, #ff6666 0%, #e60000 100%); }
-    #submit-btn:active {
-      transform: translateY(5px);
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 0px 0 #880000, 0 2px 3px rgba(0, 0, 0, 0.2);
-    }
-    #submit-btn:disabled { color: #777; text-shadow: none; }
-
-    /* タイトルへボタン（緑） */
-    #back-title-btn, .green-btn {
-      background: linear-gradient(to bottom, #4caf50 0%, #2e7d32 100%);
-      border-color: #1b5e20;
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 5px 0 #1b5e20, 0 8px 10px rgba(0, 0, 0, 0.2);
-    }
-    #back-title-btn:hover, .green-btn:hover { background: linear-gradient(to bottom, #66bb6a 0%, #388e3c 100%); }
-    #back-title-btn:active, .green-btn:active {
-      transform: translateY(5px);
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 0px 0 #1b5e20, 0 2px 3px rgba(0, 0, 0, 0.2);
-    }
-
-/* シェアボタン共通のベーススタイル */
-    .share-buttons {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 1.2rem;
-    }
-    .btn-share {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      color: #ffffff;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn-share:hover { opacity: 0.85; }
-    .btn-share:active { transform: scale(0.98); }
-
-    /* X (旧Twitter) のブランドカラー */
-    .btn-x { background-color: #000000; }
-    /* Bluesky のブランドカラー */
-    .btn-bsky { background-color: #1185fe; }
-    
-    /* --- 選択肢ボタン --- */
-    .options-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 0.8rem;
-    }
-    .option-btn {
-      background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
-      color: #333;
-      border: 1px solid #ccc;
-      padding: 12px 6px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 1), 0 4px 0 #cccccc, 0 5px 5px rgba(0, 0, 0, 0.1);
-      transition: all 0.1s;
-      word-break: break-all;
-    }
-    .option-btn:hover {
-      background: linear-gradient(to bottom, #f0f7ff 0%, #e0f0ff 100%);
-      border-color: var(--accent-color);
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 1), 0 4px 0 #8cbdf0, 0 5px 5px rgba(0, 0, 0, 0.1);
-    }
-    .option-btn:active {
-      transform: translateY(4px);
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 1), 0 0px 0 #cccccc, 0 2px 2px rgba(0, 0, 0, 0.1);
-    }
-    .option-btn.selected {
-      background: linear-gradient(to bottom, #4ea3f8 0%, var(--accent-color) 100%);
-      border-color: #1e5a96;
-      color: white;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 4px 0 #1e5a96, 0 5px 5px rgba(0, 0, 0, 0.2);
-    }
-    .option-btn.selected:active {
-      transform: translateY(4px);
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 0px 0 #1e5a96, 0 2px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    /* --- サブボタン --- */
-    .sub-btn-container {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 0.2rem;
-      margin-bottom: 1.2rem;
-      flex-wrap: wrap;
-    }
-    .sub-btn {
-      background: linear-gradient(to bottom, #ffffff 0%, #e9ecef 100%);
-      color: #555;
-      border: 1px solid #ced4da;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 3px 0 #adb5bd, 0 4px 4px rgba(0,0,0,0.05);
-      transition: all 0.1s;
-    }
-    .sub-btn:active {
-      transform: translateY(3px);
-      box-shadow: 0 0px 0 #adb5bd, 0 1px 2px rgba(0,0,0,0.05);
-    }
-
-    #giveup-btn {
-      background: linear-gradient(to bottom, #fff5f5 0%, #ffe3e3 100%);
-      color: #d9534f;
-      border-color: #ffc9c9;
-      box-shadow: 0 3px 0 #ffa8a8, 0 4px 4px rgba(0,0,0,0.05);
-    }
-    #giveup-btn:active { box-shadow: 0 0px 0 #ffa8a8, 0 1px 2px rgba(0,0,0,0.05); }
-
-    /* --- クイズ画面表示エリア --- */
-    .image-container {
-      position: relative;
-      width: 250px;
-      height: 250px;
-      margin: 0 auto 1.2rem auto;
-      border: 4px solid var(--text-main);
-      border-radius: 16px;
-      overflow: hidden;
-      background-color: #ffffff;
-    }
-    .fade-target {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      opacity: 0;
-      transition: opacity 5s ease-in-out;
-    }
-    .fade-target.show { opacity: 1; }
-    #pokemon-name-display {
-      font-size: 1.3rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
-      min-height: 1.5em;
-    }
-
-    /* --- リザルト画面カード --- */
-    .result-box {
-      background: var(--howto-bg);
-      border: 2px solid var(--accent-color);
-      border-radius: 12px;
-      padding: 1.2rem;
-      margin-bottom: 1.2rem;
-    }
-    .result-title {
-      font-size: 1.1rem;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-      line-height: 1.4;
-    }
-    .result-score {
-      font-size: 1.8rem;
-      color: var(--primary-color);
-      font-weight: bold;
-      margin: 0.5rem 0;
-    }
-
-    /* --- フッター --- */
-    .disclaimer-footer {
-      margin-top: 1.8rem;
-      padding-top: 1rem;
-      font-size: 0.72rem;
-      color: var(--text-sub);
-      line-height: 1.5;
-      text-align: left;
-      border-top: 1px solid var(--border-color);
-    }
-    .disclaimer-title { font-weight: bold; margin: 0 0 0.3rem 0; color: var(--text-muted); }
-    .disclaimer-footer p { margin: 0; }
-    
-    .data-source-box { margin-top: 0.8rem; border-top: 1px dashed var(--border-color); padding-top: 0.6rem; }
-    .data-source-summary { font-size: 0.7rem; color: var(--text-sub); cursor: pointer; outline: none; }
-    .data-source-summary:hover { color: var(--accent-color); }
-    .data-source-content { margin-top: 0.4rem; font-size: 0.68rem; line-height: 1.4; }
-    .data-source-content a { color: var(--accent-color); text-decoration: none; }
-    .data-source-content a:hover { text-decoration: underline; }
-
-    /* --- ダークモード上書き --- */
-    @media (prefers-color-scheme: dark) {
-      .image-container { background-color: #2a2a2a; }
-      
-      .range-setting-box {
-        background: rgba(42, 117, 187, 0.12);
-        border-color: #3b82f6;
-      }
-      .range-setting-header {
-        color: #60a5fa;
-        border-bottom-color: rgba(96, 165, 250, 0.3);
-      }
-
-      .main-btn {
-        background: linear-gradient(to bottom, #d63031 0%, #b32a2a 100%);
-        border-color: #8b1e1e;
-        box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1), 0 5px 0 #8b1e1e, 0 8px 10px rgba(0, 0, 0, 0.5);
-      }
-      .main-btn:hover { background: linear-gradient(to bottom, #e24545 0%, #c93434 100%); }
-      .main-btn:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1), 0 0px 0 #8b1e1e, 0 2px 3px rgba(0, 0, 0, 0.5); }
-      .main-btn:disabled {
-        background: linear-gradient(to bottom, #444 0%, #333 100%);
-        border-color: #222;
-        box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.05), 0 5px 0 #222;
-      }
-
-      #submit-btn {
-        background: linear-gradient(to bottom, #cc0000 0%, #990000 100%);
-        border-color: #660000;
-        box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1), 0 5px 0 #550000, 0 8px 10px rgba(0, 0, 0, 0.5);
-      }
-      #submit-btn:hover { background: linear-gradient(to bottom, #e60000 0%, #b30000 100%); }
-      #submit-btn:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1), 0 0px 0 #550000, 0 2px 3px rgba(0, 0, 0, 0.5); }
-
-      #back-title-btn, .green-btn {
-        background: linear-gradient(to bottom, #388e3c 0%, #1b5e20 100%);
-        border-color: #0a330c;
-        box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1), 0 5px 0 #0a330c, 0 8px 10px rgba(0, 0, 0, 0.5);
-      }
-      #back-title-btn:hover, .green-btn:hover { background: linear-gradient(to bottom, #43a047 0%, #2e7d32 100%); }
-      #back-title-btn:active, .green-btn:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1), 0 0px 0 #0a330c, 0 2px 3px rgba(0, 0, 0, 0.5); }
-
-      .option-btn {
-        background: linear-gradient(to bottom, #3a3a3a 0%, #2a2a2a 100%);
-        color: #e0e0e0; border-color: #111;
-        box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.05), 0 4px 0 #111, 0 5px 5px rgba(0, 0, 0, 0.4);
-      }
-      .option-btn:hover {
-        background: linear-gradient(to bottom, #4a4a4a 0%, #3a3a3a 100%);
-        box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.05), 0 4px 0 #1a4269, 0 5px 5px rgba(0, 0, 0, 0.4);
-      }
-      .option-btn:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.05), 0 0px 0 #111, 0 2px 2px rgba(0, 0, 0, 0.4); }
-      .option-btn.selected {
-        background: linear-gradient(to bottom, #2c6eb5 0%, #1e528a 100%); border-color: #0d2c4f;
-        box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1), 0 4px 0 #0d2c4f, 0 5px 5px rgba(0, 0, 0, 0.4);
-      }
-      .option-btn.selected:active { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1), 0 0px 0 #0d2c4f, 0 2px 2px rgba(0, 0, 0, 0.4); }
-
-      .sub-btn {
-        background: linear-gradient(to bottom, #333 0%, #222 100%); color: #bbb; border-color: #111;
-        box-shadow: 0 3px 0 #111, 0 4px 4px rgba(0,0,0,0.3);
-      }
-      .sub-btn:hover { background: linear-gradient(to bottom, #444 0%, #333 100%); color: #eee; }
-      .sub-btn:active { box-shadow: 0 0px 0 #111, 0 1px 2px rgba(0,0,0,0.3); }
-
-      #giveup-btn {
-        background: linear-gradient(to bottom, #4a2a2a 0%, #3a1a1a 100%); color: #ff8a8a; border-color: #2a0a0a;
-        box-shadow: 0 3px 0 #2a0a0a, 0 4px 4px rgba(0,0,0,0.3);
-      }
-      #giveup-btn:hover { background: linear-gradient(to bottom, #5a3a3a 0%, #4a2a2a 100%); }
-      #giveup-btn:active { box-shadow: 0 0px 0 #2a0a0a, 0 1px 2px rgba(0,0,0,0.3); }
-
-      .chip-label {
-        background: #2a2a2a;
-        border-color: #444;
-        color: #bbb;
-      }
-      .chip-checkbox input[type="checkbox"]:checked + .chip-label {
-        background: rgba(42, 117, 187, 0.3);
-        border-color: #4ea3f8;
-        color: #64b5f6;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <div class="card">
-    <div class="volume-control">
-      <button class="audio-toggle" onclick="toggleMute()" id="audio-icon">🔊</button>
-      <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.4" oninput="updateVolume(this.value)">
-    </div>
-
-    <!-- 1. スタート画面 -->
-    <div id="start-screen">
-      <h1>ポケモンパーツクイズ</h1>
-
-      <details class="howto-box">
-        <summary class="howto-summary">❓ 遊び方・モード解説</summary>
-        <div class="howto-content">
-          <p><strong>【遊び方】</strong><br>チラッと表示されたパーツを見て、どのポケモンか当てよう！</p>
-          <p><strong>【ゲームモード】</strong></p>
-          <ul>
-            <li><strong>全問制覇（チャレンジ）</strong>: 絞り込んだ範囲の全問を重複なしで順に出題。何問正解できるかな？</li>
-            <li><strong>エンドレス（連勝）</strong>: 間違えるまでずっと出題！連勝数を競おう。</li>
-            <li><strong>スピード（出題のみ）</strong>: スコア判定なしでテンポ重視の答え合わせモード。</li>
-          </ul>
-          <p><strong>【入力形式】</strong><br>「選択肢（4択）」または「テキスト入力（名前記述）」を選べます。（PC操作時は 1〜4 キーで選択可能）</p>
-          <p><strong>【便利機能】</strong></p>
-          <ul>
-            <li><strong>見えない</strong>: 画像がはじっこすぎて見えない時は再出題。</li>
-            <li><strong>わからん！</strong>: 回答を放棄して答えと全体画像を確認</li>
-            <li><strong>演出切り替え</strong>: 右上のスピーカーアイコンで音演出、フェード演出を切り替え。</li>
-          </ul>
-
-        </div>
-      </details>
-
-      <div class="form-group">
-        <label for="game-rule-select">ゲームモード</label>
-        <select id="game-rule-select">
-          <option value="challenge" selected="">全問制覇（チャレンジ）</option>
-          <option value="endless">エンドレス（連勝アタック）</option>
-          <option value="speed">スピードモード（出題のみ）</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="answer-type-select">回答方法</label>
-        <select id="answer-type-select">
-          <option value="choice" selected="">選択肢（4択）</option>
-          <option value="text">テキスト入力（自由記述）</option>
-        </select>
-      </div>
-
-      <!-- 出題範囲設定（囲み枠エリア） -->
-      <div class="range-setting-box">
-        <div class="range-setting-header">🎯 出題範囲の設定</div>
-        
-        <div class="range-setting-guide">
-          お好みの条件で問題の絞り込みができます：
-          <ul>
-            <li><strong>地方（世代）で絞る</strong>（複数選択可能）</li>
-            <li><strong>タイプで絞る</strong></li>
-          </ul>
-        </div>
-
-        <!-- 複数選択可能な地方・世代フィルター -->
-        <div class="form-group">
-          <div class="region-header-row">
-            <label style="margin-bottom:0;">🗺️ 地方・世代フィルター</label>
-            <div class="mini-btn-group">
-              <button type="button" class="mini-btn" onclick="selectAllRegions(true)">全選択</button>
-              <button type="button" class="mini-btn" onclick="selectAllRegions(false)">全解除</button>
-            </div>
-          </div>
-          
-          <div class="region-grid" id="region-checkbox-grid">
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-kanto" value="kanto" class="region-cb" checked="">
-              <label for="reg-kanto" class="chip-label">カントー</label>
-            </div>
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-johto" value="johto" class="region-cb" checked="">
-              <label for="reg-johto" class="chip-label">ジョウト</label>
-            </div>
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-hoenn" value="hoenn" class="region-cb" checked="">
-              <label for="reg-hoenn" class="chip-label">ホウエン</label>
-            </div>
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-sinnoh" value="sinnoh" class="region-cb" checked="">
-              <label for="reg-sinnoh" class="chip-label">シンオウ</label>
-            </div>
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-unova" value="unova" class="region-cb" checked="">
-              <label for="reg-unova" class="chip-label">イッシュ</label>
-            </div>
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-kalos" value="kalos" class="region-cb" checked="">
-              <label for="reg-kalos" class="chip-label">カロス</label>
-            </div>
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-alola" value="alola" class="region-cb" checked="">
-              <label for="reg-alola" class="chip-label">アローラ</label>
-            </div>
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-galar" value="galar" class="region-cb" checked="">
-              <label for="reg-galar" class="chip-label">ガラル</label>
-            </div>
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-hisui" value="hisui" class="region-cb" checked="">
-              <label for="reg-hisui" class="chip-label">ヒスイ</label>
-            </div>
-            <div class="chip-checkbox">
-              <input type="checkbox" id="reg-paldea" value="paldea" class="region-cb" checked="">
-              <label for="reg-paldea" class="chip-label">パルデア</label>
-            </div>
-          </div>
-        </div>
-
-        <!-- タイプ絞り込み -->
-        <div class="form-group" style="margin-bottom: 0;">
-          <label for="type-select">🧪 タイプ絞り込み</label>
-          <select id="type-select">
-            <option value="all" selected="">すべてのタイプ</option>
-            <option value="normal">ノーマル</option>
-            <option value="fire">ほのお</option>
-            <option value="water">みず</option>
-            <option value="grass">くさ</option>
-            <option value="electric">でんき</option>
-            <option value="ice">こおり</option>
-            <option value="fighting">かくとう</option>
-            <option value="poison">どく</option>
-            <option value="ground">じめん</option>
-            <option value="flying">ひこう</option>
-            <option value="psychic">エスパー</option>
-            <option value="bug">むし</option>
-            <option value="rock">いわ</option>
-            <option value="ghost">ゴースト</option>
-            <option value="dragon">ドラゴン</option>
-            <option value="dark">あく</option>
-            <option value="steel">はがね</option>
-            <option value="fairy">フェアリー</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="difficulty-select">難易度（表示範囲）</label>
-        <select id="difficulty-select">
-          <option value="0.35">かんたん（広め）</option>
-          <option value="0.20" selected="">ふつう（標準）</option>
-          <option value="0.10">むずかしい（超拡大）</option>
-        </select>
-      </div>
-
-      <div id="start-error" class="error-msg hidden"></div>
-
-      <p class="sound-warning">⚠️ 出題時、回答時に音が出ますので<br>端末の音量にご注意ください！</p>
-      <button id="start-btn" class="main-btn" style="margin-top: 0.5rem;" onclick="startGame()">スタート！</button>
-    </div>
-
-    <!-- 2. クイズ画面 -->
-    <div id="quiz-screen" class="hidden">
-      <div class="quiz-header-info">
-        <span id="mode-label">モード</span>
-        <span id="score-badge" class="score-badge">0 / 0</span>
-      </div>
-
-      <div class="image-container">
-        <canvas id="quiz-canvas" class="fade-target" width="250" height="250"></canvas>
-        <img id="full-image" class="fade-target hidden" alt="Pokemon">
-      </div>
-
-      <div id="pokemon-name-display">だ〜れだ？</div>
-
-      <div class="options-grid" id="options-container"></div>
-
-      <div id="text-input-container" class="hidden">
-        <input type="text" id="answer-input" placeholder="ポケモンの名前を入力..." oninput="checkTextInput()" onkeypress="handleKeyPress(event)">
-      </div>
-
-      <div id="speed-container" class="hidden">
-        <button id="reveal-btn" class="main-btn" onclick="processAnswer(true)">答えを見る</button>
-      </div>
-
-      <div class="sub-btn-container" id="sub-buttons">
-        <button id="invisible-btn" class="sub-btn" onclick="skipQuestion()">見えない（再出題）</button>
-        <button id="giveup-btn" class="sub-btn" onclick="processAnswer(false, true)">わからん！</button>
-        <button id="quit-btn" class="sub-btn" onclick="toTitle()">ゲームをやめる</button>
-      </div>
-
-      <button id="submit-btn" class="main-btn" onclick="checkUserAnswer()" disabled="">キミに決めた！</button>
-
-      <div id="next-controls" class="hidden" style="display: flex; gap: 10px;">
-        <button id="back-title-btn" class="main-btn" onclick="toTitle()">タイトルへ</button>
-        <button id="next-btn" class="main-btn" onclick="loadQuestion()">次の問題へ</button>
-      </div>
-    </div>
-
-    <!-- 3. リザルト画面 -->
-    <div id="result-screen" class="hidden">
-      <h1>結果発表！</h1>
-      <div class="result-box">
-        <div id="result-condition" class="result-title"></div>
-        <div id="result-status" style="font-weight: bold; margin-top: 0.4rem;">全問制覇達成！</div>
-        <div id="result-score" class="result-score">12 / 12</div>
-      </div>
-
-     <div class="share-buttons">
-        <button class="btn-share btn-x" onclick="shareResult('x')">
-          Twitterで結果をシェア
-        </button>
-        <button class="btn-share btn-bsky" onclick="shareResult('bsky')">
-          Blueskyで結果をシェア
-        </button>
-      </div>
-    <button class="main-btn green-btn" onclick="toTitle()">タイトルに戻る</button>
-    </div>
-
-    <!-- 免責事項フッター -->
-    <footer class="disclaimer-footer">
-      <p class="disclaimer-title">【免責事項・権利表記】</p>
-      <p>
-        当サイトは個人が制作した非公式のファンサイトであり、株式会社ポケモン、任天堂株式会社、株式会社ゲームフリーク、株式会社クリーチャーズ等とは一切関係ありません。<br>
-        作品内で使用している名称・画像の著作権・商標権は、各権利所有者に帰属します。<br>
-        本サイトのソースコードおよび構築処理には、AI（Google Gemini）による生成コードが含まれています。<br>
-        当サイトの利用により生じたトラブルや損害等について、制作者は一切の責任を負いません。
-      </p>
-      
-      <p style="margin-top: 0.8rem;">
-        <strong>【お問い合わせ】</strong><br>
-        万が一、権利者様からの削除要請等がございましたら、速やかに対処いたしますので、お手数ですが <a href="https://docs.google.com/forms/d/e/1FAIpQLSeLNh4i3RrSuDT2rdO3-LoXYuFDFuU39vH9ipQyW37OHwjImw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" style="color: var(--accent-color); text-decoration: none;">問い合わせ用Google Form</a> までご連絡ください。<br>
-        不具合報告やフィードバック、感想などもこちらのフォームにてお送りいただけますと幸いです。
-      </p>
-      
-      <details class="data-source-box">
-        <summary class="data-source-summary">🌐 データ取得元について</summary>
-        <div class="data-source-content">
-          当サイトで表示しているポケモンの各種データおよび画像素材は、<a href="https://pokeapi.co/" target="_blank" rel="noopener noreferrer">PokeAPI</a> より取得・利用しています。
-        </div>
-      </details>
-    </footer>
-  </div>
-
-  <script>
-    // 地方・図鑑番号データ定義
-    const REGION_DEFINITIONS = [
-      { id: 'kanto', name: 'カントー', min: 1, max: 151 },
-      { id: 'johto', name: 'ジョウト', min: 152, max: 251 },
-      { id: 'hoenn', name: 'ホウエン', min: 252, max: 386 },
-      { id: 'sinnoh', name: 'シンオウ', min: 387, max: 493 },
-      { id: 'unova', name: 'イッシュ', min: 494, max: 649 },
-      { id: 'kalos', name: 'カロス', min: 650, max: 721 },
-      { id: 'alola', name: 'アローラ', min: 722, max: 809 },
-      { id: 'galar', name: 'ガラル', min: 810, max: 898 },
-      { id: 'hisui', name: 'ヒスイ', min: 899, max: 905 },
-      { id: 'paldea', name: 'パルデア', min: 906, max: 1025 }
-    ];
-
-    // 日本語タイプ表記マップ
-    const TYPE_NAMES_JA = {
-      all: 'すべてのタイプ', normal: 'ノーマル', fire: 'ほのお', water: 'みず', grass: 'くさ',
-      electric: 'でんき', ice: 'こおり', fighting: 'かくとう', poison: 'どく', ground: 'じめん',
-      flying: 'ひこう', psychic: 'エスパー', bug: 'むし', rock: 'いわ', ghost: 'ゴースト',
-      dragon: 'ドラゴン', dark: 'あく', steel: 'はがね', fairy: 'フェアリー'
-    };
-
-    // --- 表記揺れ正規化関数 ---
-    function normalizePokemonName(str) {
-      if (!str) return '';
-
-      return str
-        .trim()
-        // 1. ひらがなをカタカナに変換（ぴかちゅう -> ピカチュウ）
-        .replace(/[\u3041-\u3096]/g, match => String.fromCharCode(match.charCodeAt(0) + 0x60))
-        // 2. 全角英数字を半角に変換（ポリゴン２ -> ポリゴン2）
-        .normalize('NFKC')
-        // 3. 英字を大文字に統一
-        .toUpperCase()
-        // 4. 各種「オスの表記」を全角の「♂」に寄せる
-        .replace(/(おす|オス|男|\(♂\)|\(おす\)|\(オス\)|_M|-M|\sM|M)$/i, '♂')
-        // 5. 各種「メスの表記」を全角の「♀」に寄せる
-        .replace(/(めす|メス|女|\(♀\)|\(めす\)|\(メス\)|_F|-F|\sF|F)$/i, '♀')
-        // 6. 途中のスペースや記号（：や・など）を削除
-        .replace(/[\s ・：:\-ー_]/g, '');
-    }
-
-    // --- グローバル状態 ---
-    let currentCorrectPokemon = null;
-    let selectedAnswerName = null;
-    let lastCorrectId = null;
-    
-    // 設定状態
-    let gameRule = 'challenge';
-    let answerType = 'choice';
-    let filterSummaryLabel = '';
-    
-    // デッキ・スコア管理
-    let availableDeck = [];
-    let challengeQueue = [];
-    let totalChallengeCount = 0;
-    let currentScore = 0;
-    let streakCount = 0;
-
-    let revealTimers = [];
-    const pokemonCache = {};
-    const typePokemonCache = {};
-
-    // 音量管理
-    let savedVolume = 0.4;
-    let isMuted = false;
-
-    const soundFiles = {
-      start: new Audio('sounds/start.mp3'),
-      fanfare: new Audio('sounds/fanfare.mp3'),
-      select: new Audio('sounds/select.mp3')
-    };
-
-    const soundRatios = { start: 1.0, fanfare: 1.0, select: 0.6 };
-
-    // Web Audio API による効果音合成（フォールバック）
-    let audioCtx = null;
-    function playSynthSound(type) {
-      if (isMuted || savedVolume === 0) return;
-      try {
-        if (!audioCtx) {
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-
-        const now = audioCtx.currentTime;
-        const gain = audioCtx.createGain();
-        gain.gain.value = savedVolume * 0.2;
-        gain.connect(audioCtx.destination);
-
-        if (type === 'select') {
-          const osc = audioCtx.createOscillator();
-          osc.frequency.setValueAtTime(440, now);
-          osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-          osc.connect(gain);
-          osc.start(now);
-          osc.stop(now + 0.08);
-        } else if (type === 'fanfare') {
-          const osc1 = audioCtx.createOscillator();
-          const osc2 = audioCtx.createOscillator();
-          osc1.type = 'sine'; osc2.type = 'sine';
-          osc1.frequency.setValueAtTime(659.25, now);
-          osc1.frequency.setValueAtTime(880.00, now + 0.12);
-          osc1.connect(gain); osc2.connect(gain);
-          osc1.start(now); osc1.stop(now + 0.35);
-        } else if (type === 'start') {
-          const osc = audioCtx.createOscillator();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(300, now);
-          osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
-          osc.connect(gain);
-          osc.start(now);
-          osc.stop(now + 0.15);
-        }
-      } catch (e) { console.log('Synth sound error:', e); }
-    }
-
-    applyVolume();
-
-    function applyVolume() {
-      const actualVolume = isMuted ? 0 : savedVolume;
-      Object.keys(soundFiles).forEach(key => {
-        soundFiles[key].volume = Math.min(1, actualVolume * soundRatios[key]);
-      });
-    }
-
-    function updateVolume(val) {
-      savedVolume = parseFloat(val);
-      isMuted = (savedVolume === 0);
-      document.getElementById('audio-icon').textContent = isMuted ? "🔇" : "🔊";
-      applyVolume();
-    }
-
-    function toggleMute() {
-      isMuted = !isMuted;
-      const slider = document.getElementById('volume-slider');
-      document.getElementById('audio-icon').textContent = isMuted ? "🔇" : "🔊";
-      if (!isMuted && savedVolume === 0) savedVolume = 0.4;
-      slider.value = isMuted ? 0 : savedVolume;
-      applyVolume();
-    }
-
-    function playSound(audioObject, type = 'select') {
-      if (isMuted || savedVolume === 0) return;
-      Object.values(soundFiles).forEach(sound => {
-        sound.pause();
-        sound.currentTime = 0;
-      });
-      audioObject.play().catch(() => {
-        playSynthSound(type);
-      });
-    }
-
-    function clearRevealTimers() {
-      revealTimers.forEach(timerId => clearTimeout(timerId));
-      revealTimers = [];
-    }
-
-    // --- 地方全選択・全解除 ---
-    function selectAllRegions(check) {
-      document.querySelectorAll('.region-cb').forEach(cb => {
-        cb.checked = check;
-      });
-    }
-
-    // --- ゲーム進行ロジック ---
-    async function startGame() {
-      const startBtn = document.getElementById('start-btn');
-      const errorEl = document.getElementById('start-error');
-      errorEl.classList.add('hidden');
-      startBtn.disabled = true;
-      startBtn.textContent = 'データ準備中...';
-
-      gameRule = document.getElementById('game-rule-select').value;
-      answerType = document.getElementById('answer-type-select').value;
-
-      const selectedRegionCbs = Array.from(document.querySelectorAll('.region-cb:checked'));
-      const selectedType = document.getElementById('type-select').value;
-
-      try {
-        if (selectedRegionCbs.length === 0) {
-          throw new Error('地方を少なくとも1つ選択してください。');
-        }
-
-        const selectedRegionIds = selectedRegionCbs.map(cb => cb.value);
-        
-        // 出題可能なポケモンIDリストをフィルタリング生成
-        availableDeck = await getMultiFilteredPokemonIds(selectedRegionIds, selectedType);
-
-        if (availableDeck.length === 0) {
-          throw new Error('選択した条件（地方・タイプ）に該当するポケモンが見つかりませんでした。条件を変更してください。');
-        }
-
-        if (answerType === 'choice' && availableDeck.length < 4 && gameRule !== 'speed') {
-          throw new Error(`条件に合うポケモンが${availableDeck.length}体しかいないため、4択クイズを作成できません。絞り込みを緩めてください。`);
-        }
-
-        // フィルタ概要ラベルの構築（リザルト画面・SNSシェア用）
-        let regNames = selectedRegionCbs.map(cb => {
-          const reg = REGION_DEFINITIONS.find(r => r.id === cb.value);
-          return reg ? reg.name : '';
-        });
-        
-        let regStr = (regNames.length === 9) ? '全地方' : regNames.join('・');
-        filterSummaryLabel = `【${regStr} × ${TYPE_NAMES_JA[selectedType]}】`;
-
-        // 初期化
-        currentScore = 0;
-        streakCount = 0;
-        if (gameRule === 'challenge') {
-          challengeQueue = [...availableDeck];
-          for (let i = challengeQueue.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [challengeQueue[i], challengeQueue[j]] = [challengeQueue[j], challengeQueue[i]];
-          }
-          totalChallengeCount = challengeQueue.length;
-        }
-
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.add('hidden');
-        document.getElementById('quiz-screen').classList.remove('hidden');
-
-        loadQuestion();
-      } catch (err) {
-        errorEl.textContent = err.message;
-        errorEl.classList.remove('hidden');
-      } finally {
-        startBtn.disabled = false;
-        startBtn.textContent = 'スタート！';
-      }
-    }
-
-    function toTitle() {
-      clearRevealTimers();
-      Object.values(soundFiles).forEach(sound => {
-        sound.pause();
-        sound.currentTime = 0;
-      });
-      document.getElementById('quiz-screen').classList.add('hidden');
-      document.getElementById('result-screen').classList.add('hidden');
-      document.getElementById('start-screen').classList.remove('hidden');
-    }
-
-    async function loadQuestion() {
-      clearRevealTimers();
-      selectedAnswerName = null;
-
-      const modeLabel = document.getElementById('mode-label');
-      const scoreBadge = document.getElementById('score-badge');
-      
-      if (gameRule === 'challenge') {
-        modeLabel.textContent = '全問制覇';
-        // 現在何問目かを計算（全問題数 - 残り問題数 + 1）
-        const currentQuestionNum = totalChallengeCount - challengeQueue.length + 1;
-        scoreBadge.textContent = `${currentQuestionNum}問目／${totalChallengeCount}問中${currentScore}問正解`;
-      } else if (gameRule === 'endless') {
-        modeLabel.textContent = 'エンドレス';
-        scoreBadge.textContent = `${streakCount} 問連続正解中！🔥`;
-      } else {
-        modeLabel.textContent = 'スピード';
-        scoreBadge.textContent = '--';
-      }
-
-      document.getElementById('pokemon-name-display').textContent = "だ〜れだ？";
-      document.getElementById('submit-btn').disabled = true;
-      document.getElementById('next-controls').classList.add('hidden');
-      document.getElementById('sub-buttons').classList.remove('hidden');
-
-      const canvas = document.getElementById('quiz-canvas');
-      const fullImg = document.getElementById('full-image');
-      
-      canvas.style.transition = 'none';
-      fullImg.style.transition = 'none';
-      canvas.classList.remove('show', 'hidden');
-      fullImg.classList.remove('show');
-      fullImg.classList.add('hidden');
-
-      void canvas.offsetWidth;
-
-      const isNoEffect = (isMuted || savedVolume === 0);
-      canvas.style.transition = isNoEffect ? 'none' : '';
-      fullImg.style.transition = isNoEffect ? 'none' : '';
-
-      const optionsContainer = document.getElementById('options-container');
-      const textContainer = document.getElementById('text-input-container');
-      const speedContainer = document.getElementById('speed-container');
-      const answerInput = document.getElementById('answer-input');
-
-      optionsContainer.classList.add('hidden');
-      textContainer.classList.add('hidden');
-      speedContainer.classList.add('hidden');
-
-      if (gameRule === 'speed') {
-        speedContainer.classList.remove('hidden');
-        document.getElementById('submit-btn').classList.add('hidden');
-        document.getElementById('giveup-btn').classList.add('hidden');
-      } else if (answerType === 'choice') {
-        optionsContainer.classList.remove('hidden');
-        document.getElementById('submit-btn').classList.remove('hidden');
-        document.getElementById('giveup-btn').classList.remove('hidden');
-        optionsContainer.innerHTML = '';
-      } else if (answerType === 'text') {
-        textContainer.classList.remove('hidden');
-        document.getElementById('submit-btn').classList.remove('hidden');
-        document.getElementById('giveup-btn').classList.remove('hidden');
-        answerInput.value = '';
-        answerInput.disabled = false;
-      }
-
-      const cropRatio = parseFloat(document.getElementById('difficulty-select').value);
-      
-      let correctId = null;
-      if (gameRule === 'challenge') {
-        correctId = challengeQueue[challengeQueue.length - 1];
-      } else {
-        do {
-          correctId = availableDeck[Math.floor(Math.random() * availableDeck.length)];
-        } while (correctId === lastCorrectId && availableDeck.length > 1);
-      }
-      lastCorrectId = correctId;
-
-      let choiceIds = [correctId];
-      if (gameRule !== 'speed' && answerType === 'choice') {
-        const pool = availableDeck.length >= 4 ? availableDeck : Array.from({length: 1025}, (_, i) => i + 1);
-        while (choiceIds.length < 4) {
-          const randId = pool[Math.floor(Math.random() * pool.length)];
-          if (!choiceIds.includes(randId)) choiceIds.push(randId);
-        }
-        for (let i = choiceIds.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [choiceIds[i], choiceIds[j]] = [choiceIds[j], choiceIds[i]];
-        }
-      }
-
-      const pokemonList = await Promise.all(choiceIds.map(id => getPokemonData(id)));
-      currentCorrectPokemon = pokemonList.find(p => p.id === correctId);
-
-      fullImg.src = currentCorrectPokemon.imgUrl;
-      await drawCroppedImage(currentCorrectPokemon.imgUrl, cropRatio);
-
-      playSound(soundFiles.start, 'start');
-      setTimeout(() => { canvas.classList.add('show'); }, 50);
-
-      if (gameRule !== 'speed' && answerType === 'choice') {
-        pokemonList.forEach((pokemon, index) => {
-          const btn = document.createElement('button');
-          btn.className = 'option-btn';
-          btn.textContent = `${index + 1}. ${pokemon.name}`;
-          btn.onclick = () => selectOption(btn, pokemon.name);
-          optionsContainer.appendChild(btn);
-        });
-      } else if (gameRule !== 'speed' && answerType === 'text') {
-        answerInput.focus();
-      }
-    }
-
-    function selectOption(selectedBtn, name) {
-      document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
-      selectedBtn.classList.add('selected');
-      selectedAnswerName = name;
-      document.getElementById('submit-btn').disabled = false;
-    }
-
-    function checkTextInput() {
-      const val = document.getElementById('answer-input').value.trim();
-      selectedAnswerName = val;
-      document.getElementById('submit-btn').disabled = (val === '');
-    }
-
-    function handleKeyPress(event) {
-      if (event.key === 'Enter' && !document.getElementById('submit-btn').disabled) {
-        checkUserAnswer();
-      }
-    }
-
-    window.addEventListener('keydown', (e) => {
-      const quizScreen = document.getElementById('quiz-screen');
-      if (quizScreen.classList.contains('hidden')) return;
-
-      if (answerType === 'choice' && gameRule !== 'speed') {
-        const keyNum = parseInt(e.key, 10);
-        if (keyNum >= 1 && keyNum <= 4) {
-          const btns = document.querySelectorAll('.option-btn');
-          if (btns[keyNum - 1] && !btns[keyNum - 1].disabled) {
-            btns[keyNum - 1].click();
-          }
-        }
-      }
-
-      if (e.key === 'Enter') {
-        const submitBtn = document.getElementById('submit-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const nextControls = document.getElementById('next-controls');
-
-        if (!nextControls.classList.contains('hidden')) {
-          nextBtn.click();
-        } else if (!submitBtn.classList.contains('hidden') && !submitBtn.disabled) {
-          checkUserAnswer();
-        }
-      }
-    });
-
-    function skipQuestion() {
-      loadQuestion();
-    }
-
-    function checkUserAnswer() {
-      if (!selectedAnswerName) return;
-      
-      // 表記揺れ対策：両方を正規化してから比較
-      const inputNorm = normalizePokemonName(selectedAnswerName);
-      const targetNorm = normalizePokemonName(currentCorrectPokemon.name);
-      
-      const isCorrect = (inputNorm === targetNorm);
-      processAnswer(isCorrect, false);
-    }
-
-    function processAnswer(isCorrect, isGiveup = false) {
-      playSound(soundFiles.fanfare, 'fanfare');
-
-      let resultText = '';
-      if (gameRule === 'speed') {
-        resultText = `正解は ${currentCorrectPokemon.name}！`;
-      } else if (isGiveup) {
-        resultText = `正解は ${currentCorrectPokemon.name} でした！`;
-      } else if (isCorrect) {
-        resultText = `⭕️ 正解！ ${currentCorrectPokemon.name}`;
-      } else {
-        resultText = `❌ 残念... 正解は ${currentCorrectPokemon.name}`;
-      }
-
-      document.getElementById('pokemon-name-display').textContent = resultText;
-
-      if (gameRule === 'speed') {
-        document.getElementById('speed-container').classList.add('hidden');
-      } else {
-        if (answerType === 'choice') {
-          document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
-        } else if (answerType === 'text') {
-          document.getElementById('answer-input').disabled = true;
-        }
-        document.getElementById('submit-btn').classList.add('hidden');
-      }
-      
-      document.getElementById('sub-buttons').classList.add('hidden');
-      revealFullImage();
-
-      const nextBtn = document.getElementById('next-btn');
-
-      if (gameRule === 'challenge') {
-        challengeQueue.pop();
-        if (isCorrect) currentScore++;
-
-        if (challengeQueue.length === 0) {
-          nextBtn.textContent = '結果を見る';
-          nextBtn.onclick = () => showFinalResult(true);
-        } else {
-          nextBtn.textContent = '次の問題へ';
-          nextBtn.onclick = () => loadQuestion();
-        }
-      } else if (gameRule === 'endless') {
-        if (isCorrect && !isGiveup) {
-          streakCount++;
-          nextBtn.textContent = '次の問題へ';
-          nextBtn.onclick = () => loadQuestion();
-        } else {
-          nextBtn.textContent = '結果を見る';
-          nextBtn.onclick = () => showFinalResult(false);
-        }
-      } else {
-        nextBtn.textContent = '次の問題へ';
-        nextBtn.onclick = () => loadQuestion();
-      }
-    }
-
-    function revealFullImage() {
-      clearRevealTimers();
-      const canvas = document.getElementById('quiz-canvas');
-      const fullImg = document.getElementById('full-image');
-      const isNoEffect = (isMuted || savedVolume === 0);
-      
-      canvas.style.transition = isNoEffect ? 'none' : '';
-      fullImg.style.transition = isNoEffect ? 'none' : '';
-      fullImg.classList.remove('hidden');
-      
-      const timer1 = setTimeout(() => {
-        fullImg.classList.add('show');
-        canvas.classList.remove('show');
-      }, 50);
-
-      const timer2 = setTimeout(() => {
-        canvas.classList.add('hidden');
-      }, isNoEffect ? 0 : 5000);
-
-      revealTimers.push(timer1, timer2);
-      document.getElementById('next-controls').classList.remove('hidden');
-    }
-
-    function showFinalResult(isChallengeComplete) {
-      document.getElementById('quiz-screen').classList.add('hidden');
-      document.getElementById('result-screen').classList.remove('hidden');
-
-      const condEl = document.getElementById('result-condition');
-      const statusEl = document.getElementById('result-status');
-      const scoreEl = document.getElementById('result-score');
-
-      condEl.textContent = filterSummaryLabel;
-
-      if (gameRule === 'challenge') {
-        if (currentScore === totalChallengeCount) {
-          statusEl.textContent = '🎉 ALL CLEAR!（全問正解）';
-        } else {
-          statusEl.textContent = 'チャレンジ終了！';
-        }
-        scoreEl.textContent = `${currentScore} / ${totalChallengeCount} 問正解`;
-      } else if (gameRule === 'endless') {
-        statusEl.textContent = 'ゲームオーバー！';
-        scoreEl.textContent = `連続正解数: ${streakCount}問`;
-      }
-    }
-
-function shareResult(platform = 'x') {
-      let text = `パーツで当てる！ポケモンクイズ\n${filterSummaryLabel}\n`;
-      
-      if (gameRule === 'challenge') {
-        text += `結果: ${currentScore} / ${totalChallengeCount} 問正解！\n`;
-        if (currentScore === totalChallengeCount) text += `🎉 全問正解達成！\n`;
-      } else if (gameRule === 'endless') {
-        text += `記録: ${streakCount}問 連続正解！🔥\n`;
-      }
-
-      const pageUrl = window.location.href;
-
-      if (platform === 'bsky') {
-        // Blueskyはtext内にURLも含めて指定します
-        const fullText = `${text}#ポケモンパーツクイズ\n${pageUrl}`;
-        const shareUrl = `https://bsky.app/intent/compose?text=${encodeURIComponent(fullText)}`;
-        window.open(shareUrl, '_blank');
-      } else {
-        // X (旧Twitter) 用
-        text += `#ポケモンパーツクイズ\n`;
-        const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`;
-        window.open(shareUrl, '_blank');
-      }
-    }
-    
-    // --- 複合フィルタリング（地方複数 × タイプ） ---
-    async function getMultiFilteredPokemonIds(regionIds, type) {
-      // 1. 選択された地方のID範囲の和集合を取得
-      let filteredIds = [];
-      regionIds.forEach(regId => {
-        const reg = REGION_DEFINITIONS.find(r => r.id === regId);
-        if (reg) {
-          for (let i = reg.min; i <= reg.max; i++) {
-            filteredIds.push(i);
-          }
-        }
-      });
-
-      // 2. タイプ指定がある場合の絞り込み
-      if (type !== 'all') {
-        if (!typePokemonCache[type]) {
-          const res = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
-          const data = await res.json();
-          typePokemonCache[type] = data.pokemon.map(p => {
-            const parts = p.pokemon.url.split('/').filter(Boolean);
-            return parseInt(parts[parts.length - 1], 10);
-          }).filter(id => id <= 1025);
-        }
-        const typeSet = new Set(typePokemonCache[type]);
-        filteredIds = filteredIds.filter(id => typeSet.has(id));
-      }
-
-      return filteredIds;
-    }
-
-    async function getPokemonData(id) {
-      if (pokemonCache[id]) return pokemonCache[id];
-      const [speciesRes, pokemonRes] = await Promise.all([
-        fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`),
-        fetch(`https://pokeapi.co/api/v2/pokemon/${id}/`)
-      ]);
-      const speciesData = await speciesRes.json();
-      const pokemonData = await pokemonRes.json();
-
-      const jaName = speciesData.names.find(n => n.language.name === "ja-Hrkt" || n.language.name === "ja").name;
-      const genusObj = speciesData.genera.find(g => g.language.name === "ja-Hrkt" || g.language.name === "ja");
-      const genus = genusObj ? genusObj.genus : 'ポケモン';
-      const types = pokemonData.types.map(t => t.type.name);
-
-      const imgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
-      const fullData = { id, name: jaName, genus, types, imgUrl };
-      pokemonCache[id] = fullData;
-      return fullData;
-    }
-
-    function drawCroppedImage(imgUrl, cropRatio) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = imgUrl;
-
-        img.onload = () => {
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = img.width;
-          tempCanvas.height = img.height;
-          const tempCtx = tempCanvas.getContext('2d');
-          tempCtx.drawImage(img, 0, 0);
-
-          const imgData = tempCtx.getImageData(0, 0, img.width, img.height).data;
-          const opaquePixels = [];
-          
-          for (let y = 0; y < img.height; y += 2) {
-            for (let x = 0; x < img.width; x += 2) {
-              if (imgData[(y * img.width + x) * 4 + 3] > 50) {
-                opaquePixels.push({ x, y });
-              }
-            }
-          }
-
-          if (opaquePixels.length === 0) {
-            resolve(); return;
-          }
-
-          const cropSize = img.width * cropRatio;
-          let bestSx = 0, bestSy = 0;
-          let maxOpaqueCount = -1;
-
-          for (let attempt = 0; attempt < 25; attempt++) {
-            const randomPixel = opaquePixels[Math.floor(Math.random() * opaquePixels.length)];
-            const sx = Math.max(0, Math.min(img.width - cropSize, randomPixel.x - cropSize / 2));
-            const sy = Math.max(0, Math.min(img.height - cropSize, randomPixel.y - cropSize / 2));
-
-            let count = 0;
-            const step = Math.max(1, Math.floor(cropSize / 15));
-            for (let cy = sy; cy < sy + cropSize; cy += step) {
-              for (let cx = sx; cx < sx + cropSize; cx += step) {
-                const idx = (Math.floor(cy) * img.width + Math.floor(cx)) * 4 + 3;
-                if (imgData[idx] > 50) count++;
-              }
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
+        <meta name="robots" content="noindex,nofollow" />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com/" />
+        <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com/"
+            crossorigin=""
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"
+            rel="stylesheet"
+        />
+
+        <meta
+            name="description"
+            content="拡大表示されたポケモンの一部の画像からなんのポケモンか当ててみよう！"
+        />
+
+        <meta property="og:type" content="website" />
+        <meta
+            property="og:url"
+            content="https://poke-quiz-release.pages.dev/"
+        />
+        <meta property="og:title" content="パーツで当てる！ポケモンクイズ" />
+        <meta
+            property="og:description"
+            content="拡大表示されたポケモンの一部の画像からなんのポケモンか当ててみよう！"
+        />
+        <meta
+            property="og:image"
+            content="https://poke-quiz-release.pages.dev/images/ogp.png"
+        />
+        <meta
+            property="og:site_name"
+            content="パーツで当てる！ポケモンクイズ"
+        />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="パーツで当てる！ポケモンクイズ" />
+        <meta
+            name="twitter:description"
+            content="拡大表示されたポケモンの一部の画像からなんのポケモンか当ててみよう！"
+        />
+        <meta
+            name="twitter:image"
+            content="https://poke-quiz-release.pages.dev/images/ogp.png"
+        />
+
+        <title>パーツで当てる！ポケモンクイズ</title>
+        <style>
+            /* --- CSS変数定義（カラーパレット） --- */
+            :root {
+                /* 基本カラー */
+                --primary-color: #e63946;
+                --secondary-color: #ffcb05;
+                --accent-color: #2a75bb;
+
+                /* 背景・カード・テキスト */
+                --bg-color: #f0f4f8;
+                --bg-pattern: #d1e1f0;
+                --card-bg: #ffffff;
+                --card-shadow: rgba(0, 0, 0, 0.12);
+                --text-main: #333333;
+                --text-muted: #555555;
+                --text-sub: #777777;
+
+                /* UIパーツ（通常モード） */
+                --border-color: #ddd;
+                --input-bg: #ffffff;
+                --howto-bg: #f8f9fa;
+                --howto-border: #e9ecef;
+                --howto-summary-hover: #f1f3f5;
             }
 
-            if (count > maxOpaqueCount) {
-              maxOpaqueCount = count;
-              bestSx = sx;
-              bestSy = sy;
+            /* ダークモード時の変数上書き */
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg-color: #121212;
+                    --bg-pattern: rgba(255, 255, 255, 0.05);
+                    --card-bg: #1e1e1e;
+                    --card-shadow: rgba(0, 0, 0, 0.5);
+                    --text-main: #e0e0e0;
+                    --text-muted: #cccccc;
+                    --text-sub: #aaaaaa;
+
+                    --border-color: #444444;
+                    --input-bg: #2a2a2a;
+                    --howto-bg: #2c2c2c;
+                    --howto-border: #444444;
+                    --howto-summary-hover: #333333;
+                }
             }
-            if (count > (cropSize / step) * (cropSize / step) * 0.35) break;
-          }
 
-          const canvas = document.getElementById('quiz-canvas');
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, bestSx, bestSy, cropSize, cropSize, 0, 0, canvas.width, canvas.height);
-          resolve();
-        };
-      });
-    }
-    
-    // --- モード選択時の回答方法プルダウン制御 ---
-    function updateInputMethodDisabledState() {
-      const ruleSelect = document.getElementById('game-rule-select');
-      const inputMethodSelect = document.getElementById('answer-type-select');
-      
-      // 要素が存在する場合のみ処理を実行
-      if (ruleSelect && inputMethodSelect) {
-        if (ruleSelect.value === 'speed') {
-          inputMethodSelect.disabled = true;
-        } else {
-          inputMethodSelect.disabled = false;
-        }
-      }
-    }
+            /* --- 全体レイアウト --- */
+            body {
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                background-color: var(--bg-color);
+                background-image:
+                    radial-gradient(var(--bg-pattern) 20%, transparent 20%),
+                    radial-gradient(var(--bg-pattern) 20%, transparent 20%);
+                background-size: 20px 20px;
+                background-position:
+                    0 0,
+                    10px 10px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                min-height: 100dvh;
+                padding: 20px 16px;
+                margin: 0;
+                box-sizing: border-box;
+                color: var(--text-main);
+                width: 100%;
+            }
 
-    // ページの読み込み完了時にイベントリスナーを登録し、初期状態を反映
-    window.addEventListener('DOMContentLoaded', () => {
-      const ruleSelect = document.getElementById('game-rule-select');
-      if (ruleSelect) {
-        ruleSelect.addEventListener('change', updateInputMethodDisabledState);
-        updateInputMethodDisabledState(); // 読み込み時の初期状態をセット
-      }
-    });
-  </script>
+            .card {
+                background: var(--card-bg);
+                padding: 2rem;
+                border-radius: 20px;
+                box-shadow: 0 10px 30px var(--card-shadow);
+                text-align: center;
+                max-width: 460px;
+                width: 92%;
+                position: relative;
+                box-sizing: border-box;
+            }
 
-</body></html>
+            h1,
+            #pokemon-name-display,
+            .score-badge {
+                font-family: "DotGothic16", sans-serif;
+                letter-spacing: 2px;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+                margin-top: 0;
+                margin-bottom: 1.2rem;
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            /* --- 音量コントロール --- */
+            .volume-control {
+                position: absolute;
+                top: 3px;
+                right: 4px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                background: rgba(128, 128, 128, 0.1);
+                padding: 4px 8px;
+                border-radius: 20px;
+            }
+            .audio-toggle {
+                background: none;
+                border: none;
+                font-size: 1.1rem;
+                cursor: pointer;
+                padding: 0;
+                line-height: 1;
+            }
+            #volume-slider {
+                width: 65px;
+                cursor: pointer;
+                accent-color: var(--accent-color);
+            }
+
+            /* --- フォーム群 --- */
+            .form-group {
+                margin-bottom: 1.1rem;
+                text-align: left;
+            }
+            label {
+                display: block;
+                font-weight: bold;
+                font-size: 0.88rem;
+                margin-bottom: 0.4rem;
+                color: var(--text-muted);
+            }
+            select,
+            #answer-input {
+                width: 100%;
+                padding: 10px 12px;
+                border-radius: 8px;
+                border: 2px solid var(--border-color);
+                font-size: 0.95rem;
+                font-weight: bold;
+                background: var(--input-bg);
+                color: var(--text-main);
+                box-sizing: border-box;
+            }
+            #answer-input {
+                text-align: center;
+            }
+            #answer-input:focus {
+                border-color: var(--accent-color);
+                outline: none;
+            }
+
+            /* --- 出題範囲設定（囲み枠） --- */
+            .range-setting-box {
+                border: 2.5px solid var(--accent-color);
+                border-radius: 14px;
+                padding: 1rem;
+                margin-bottom: 1.1rem;
+                background: rgba(42, 117, 187, 0.04);
+                text-align: left;
+                position: relative;
+            }
+            .range-setting-header {
+                font-family: "DotGothic16", sans-serif;
+                font-weight: bold;
+                font-size: 1.05rem;
+                color: var(--accent-color);
+                margin-bottom: 0.6rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                border-bottom: 2px dashed rgba(42, 117, 187, 0.3);
+                padding-bottom: 0.4rem;
+                letter-spacing: 1px;
+            }
+            .range-setting-guide {
+                font-size: 0.82rem;
+                color: var(--text-muted);
+                margin-bottom: 0.9rem;
+                background: var(--input-bg);
+                padding: 8px 12px;
+                border-radius: 8px;
+                border: 1px solid var(--border-color);
+                line-height: 1.5;
+            }
+            .range-setting-guide ul {
+                margin: 4px 0 0 0;
+                padding-left: 1.2rem;
+            }
+            .range-setting-guide li {
+                margin-bottom: 2px;
+            }
+
+            /* --- 地方複数選択チップUI --- */
+            .region-header-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.4rem;
+            }
+            .mini-btn-group {
+                display: flex;
+                gap: 6px;
+            }
+            .mini-btn {
+                background: var(--input-bg);
+                border: 1px solid var(--border-color);
+                color: var(--accent-color);
+                font-size: 0.72rem;
+                font-weight: bold;
+                padding: 3px 8px;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: background 0.1s;
+            }
+            .mini-btn:hover {
+                background: var(--howto-summary-hover);
+            }
+            .region-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+            .chip-checkbox {
+                position: relative;
+            }
+            .chip-checkbox input[type="checkbox"] {
+                position: absolute;
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+            .chip-label {
+                display: block;
+                padding: 8px 4px;
+                background: var(--input-bg);
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                text-align: center;
+                cursor: pointer;
+                user-select: none;
+                transition: all 0.15s ease;
+                color: var(--text-muted);
+            }
+            .chip-checkbox input[type="checkbox"]:checked + .chip-label {
+                background: rgba(42, 117, 187, 0.12);
+                border-color: var(--accent-color);
+                color: var(--accent-color);
+            }
+
+            /* 遊び方アコーディオン */
+            .howto-box {
+                background: var(--howto-bg);
+                border: 1px solid var(--howto-border);
+                border-radius: 10px;
+                margin-bottom: 1.2rem;
+                text-align: left;
+                overflow: hidden;
+            }
+            .howto-summary {
+                padding: 10px 14px;
+                font-weight: bold;
+                font-size: 0.9rem;
+                color: var(--accent-color);
+                cursor: pointer;
+                user-select: none;
+                outline: none;
+            }
+            .howto-summary:hover {
+                background-color: var(--howto-summary-hover);
+            }
+            .howto-content {
+                padding: 0 14px 12px 14px;
+                font-size: 0.82rem;
+                color: var(--text-muted);
+                line-height: 1.5;
+                border-top: 1px solid var(--howto-border);
+                margin-top: 4px;
+            }
+            .howto-content p {
+                margin: 8px 0 4px 0;
+            }
+            .howto-content ul {
+                margin: 0;
+                padding-left: 1.2rem;
+            }
+            .howto-content li {
+                margin-bottom: 4px;
+            }
+
+            /* 注意書き・エラー表示 */
+            .sound-warning {
+                font-size: 0.8rem;
+                color: #d9534f;
+                text-align: center;
+                margin: 1.2rem 0 0.8rem 0;
+                font-weight: bold;
+                line-height: 1.4;
+            }
+            .error-msg {
+                color: #e63946;
+                font-size: 0.85rem;
+                font-weight: bold;
+                margin-top: 0.5rem;
+            }
+            @media (prefers-color-scheme: dark) {
+                .sound-warning {
+                    color: #ff6b6b;
+                }
+                .error-msg {
+                    color: #ff6b6b;
+                }
+            }
+
+            /* --- スコア・状態バッジ --- */
+            .quiz-header-info {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.6rem;
+                font-size: 0.9rem;
+                font-weight: bold;
+                color: var(--accent-color);
+            }
+            .score-badge {
+                background: rgba(42, 117, 187, 0.1);
+                padding: 4px 10px;
+                border-radius: 12px;
+                font-size: 0.95rem;
+            }
+
+            /* --- ボタン基本スタイル --- */
+            .main-btn {
+                background: linear-gradient(
+                    to bottom,
+                    #ff5e6d 0%,
+                    #e63946 100%
+                );
+                color: white;
+                border: 1px solid #b32a35;
+                padding: 14px 20px;
+                border-radius: 10px;
+                font-size: 1.1rem;
+                font-weight: bold;
+                width: 100%;
+                cursor: pointer;
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+                    0 5px 0 #b32a35,
+                    0 8px 10px rgba(0, 0, 0, 0.2);
+                transition: all 0.1s;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                position: relative;
+            }
+            .main-btn:hover {
+                background: linear-gradient(
+                    to bottom,
+                    #ff7a87 0%,
+                    #d62839 100%
+                );
+            }
+            .main-btn:active {
+                transform: translateY(5px);
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+                    0 0px 0 #b32a35,
+                    0 2px 3px rgba(0, 0, 0, 0.2);
+            }
+            .main-btn:disabled {
+                background: linear-gradient(
+                    to bottom,
+                    #e0e0e0 0%,
+                    #cccccc 100%
+                );
+                border-color: #999;
+                color: #777;
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+                    0 5px 0 #999999;
+                text-shadow: none;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            /* キミに決めた！ボタン（リッチ） */
+            #submit-btn {
+                background: linear-gradient(
+                    to bottom,
+                    #ff4d4d 0%,
+                    #cc0000 100%
+                );
+                text-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
+                border-color: #990000;
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                    0 5px 0 #880000,
+                    0 8px 10px rgba(0, 0, 0, 0.2);
+                margin-bottom: 0.8rem;
+            }
+            #submit-btn:hover {
+                background: linear-gradient(
+                    to bottom,
+                    #ff6666 0%,
+                    #e60000 100%
+                );
+            }
+            #submit-btn:active {
+                transform: translateY(5px);
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                    0 0px 0 #880000,
+                    0 2px 3px rgba(0, 0, 0, 0.2);
+            }
+            #submit-btn:disabled {
+                color: #777;
+                text-shadow: none;
+            }
+
+            /* タイトルへボタン（緑） */
+            #back-title-btn,
+            .green-btn {
+                background: linear-gradient(
+                    to bottom,
+                    #4caf50 0%,
+                    #2e7d32 100%
+                );
+                border-color: #1b5e20;
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                    0 5px 0 #1b5e20,
+                    0 8px 10px rgba(0, 0, 0, 0.2);
+            }
+            #back-title-btn:hover,
+            .green-btn:hover {
+                background: linear-gradient(
+                    to bottom,
+                    #66bb6a 0%,
+                    #388e3c 100%
+                );
+            }
+            #back-title-btn:active,
+            .green-btn:active {
+                transform: translateY(5px);
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                    0 0px 0 #1b5e20,
+                    0 2px 3px rgba(0, 0, 0, 0.2);
+            }
+
+            /* シェアボタン共通のベーススタイル */
+            .share-buttons {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                margin-bottom: 1.2rem;
+            }
+            .btn-share {
+                padding: 10px 18px;
+                border: none;
+                border-radius: 8px;
+                font-weight: bold;
+                color: #ffffff;
+                cursor: pointer;
+                transition:
+                    opacity 0.2s,
+                    transform 0.1s;
+            }
+            .btn-share:hover {
+                opacity: 0.85;
+            }
+            .btn-share:active {
+                transform: scale(0.98);
+            }
+
+            /* X (旧Twitter) のブランドカラー */
+            .btn-x {
+                background-color: #000000;
+            }
+            /* Bluesky のブランドカラー */
+            .btn-bsky {
+                background-color: #1185fe;
+            }
+
+            /* --- 選択肢ボタン --- */
+            .options-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-bottom: 0.8rem;
+            }
+            .option-btn {
+                background: linear-gradient(
+                    to bottom,
+                    #ffffff 0%,
+                    #f0f0f0 100%
+                );
+                color: #333;
+                border: 1px solid #ccc;
+                padding: 12px 6px;
+                border-radius: 10px;
+                font-size: 0.85rem;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 1),
+                    0 4px 0 #cccccc,
+                    0 5px 5px rgba(0, 0, 0, 0.1);
+                transition: all 0.1s;
+                word-break: break-all;
+            }
+            .option-btn:hover {
+                background: linear-gradient(
+                    to bottom,
+                    #f0f7ff 0%,
+                    #e0f0ff 100%
+                );
+                border-color: var(--accent-color);
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 1),
+                    0 4px 0 #8cbdf0,
+                    0 5px 5px rgba(0, 0, 0, 0.1);
+            }
+            .option-btn:active {
+                transform: translateY(4px);
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 1),
+                    0 0px 0 #cccccc,
+                    0 2px 2px rgba(0, 0, 0, 0.1);
+            }
+            .option-btn.selected {
+                background: linear-gradient(
+                    to bottom,
+                    #4ea3f8 0%,
+                    var(--accent-color) 100%
+                );
+                border-color: #1e5a96;
+                color: white;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                    0 4px 0 #1e5a96,
+                    0 5px 5px rgba(0, 0, 0, 0.2);
+            }
+            .option-btn.selected:active {
+                transform: translateY(4px);
+                box-shadow:
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                    0 0px 0 #1e5a96,
+                    0 2px 2px rgba(0, 0, 0, 0.2);
+            }
+
+            /* --- サブボタン --- */
+            .sub-btn-container {
+                display: flex;
+                justify-content: center;
+                gap: 6px;
+                margin-top: 0.2rem;
+                margin-bottom: 1.2rem;
+                flex-wrap: wrap;
+            }
+            .sub-btn {
+                background: linear-gradient(
+                    to bottom,
+                    #ffffff 0%,
+                    #e9ecef 100%
+                );
+                color: #555;
+                border: 1px solid #ced4da;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 0.78rem;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow:
+                    0 3px 0 #adb5bd,
+                    0 4px 4px rgba(0, 0, 0, 0.05);
+                transition: all 0.1s;
+            }
+            .sub-btn:active {
+                transform: translateY(3px);
+                box-shadow:
+                    0 0px 0 #adb5bd,
+                    0 1px 2px rgba(0, 0, 0, 0.05);
+            }
+
+            #giveup-btn {
+                background: linear-gradient(
+                    to bottom,
+                    #fff5f5 0%,
+                    #ffe3e3 100%
+                );
+                color: #d9534f;
+                border-color: #ffc9c9;
+                box-shadow:
+                    0 3px 0 #ffa8a8,
+                    0 4px 4px rgba(0, 0, 0, 0.05);
+            }
+            #giveup-btn:active {
+                box-shadow:
+                    0 0px 0 #ffa8a8,
+                    0 1px 2px rgba(0, 0, 0, 0.05);
+            }
+
+            /* --- クイズ画面表示エリア --- */
+            .image-container {
+                position: relative;
+                width: 250px;
+                height: 250px;
+                margin: 0 auto 1.2rem auto;
+                border: 4px solid var(--text-main);
+                border-radius: 16px;
+                overflow: hidden;
+                background-color: #ffffff;
+            }
+            .fade-target {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                opacity: 0;
+                transition: opacity 5s ease-in-out;
+            }
+            .fade-target.show {
+                opacity: 1;
+            }
+            #pokemon-name-display {
+                font-size: 1.3rem;
+                font-weight: bold;
+                margin-bottom: 1rem;
+                min-height: 1.5em;
+            }
+
+            /* --- リザルト画面カード --- */
+            .result-box {
+                background: var(--howto-bg);
+                border: 2px solid var(--accent-color);
+                border-radius: 12px;
+                padding: 1.2rem;
+                margin-bottom: 1.2rem;
+            }
+            .result-title {
+                font-size: 1.1rem;
+                font-weight: bold;
+                margin-bottom: 0.5rem;
+                line-height: 1.4;
+            }
+            .result-score {
+                font-size: 1.8rem;
+                color: var(--primary-color);
+                font-weight: bold;
+                margin: 0.5rem 0;
+            }
+
+            /* --- フッター --- */
+            .disclaimer-footer {
+                margin-top: 1.8rem;
+                padding-top: 1rem;
+                font-size: 0.72rem;
+                color: var(--text-sub);
+                line-height: 1.5;
+                text-align: left;
+                border-top: 1px solid var(--border-color);
+            }
+            .disclaimer-title {
+                font-weight: bold;
+                margin: 0 0 0.3rem 0;
+                color: var(--text-muted);
+            }
+            .disclaimer-footer p {
+                margin: 0;
+            }
+
+            .data-source-box {
+                margin-top: 0.8rem;
+                border-top: 1px dashed var(--border-color);
+                padding-top: 0.6rem;
+            }
+            .data-source-summary {
+                font-size: 0.7rem;
+                color: var(--text-sub);
+                cursor: pointer;
+                outline: none;
+            }
+            .data-source-summary:hover {
+                color: var(--accent-color);
+            }
+            .data-source-content {
+                margin-top: 0.4rem;
+                font-size: 0.68rem;
+                line-height: 1.4;
+            }
+            .data-source-content a {
+                color: var(--accent-color);
+                text-decoration: none;
+            }
+            .data-source-content a:hover {
+                text-decoration: underline;
+            }
+
+            /* --- ダークモード上書き --- */
+            @media (prefers-color-scheme: dark) {
+                .image-container {
+                    background-color: #2a2a2a;
+                }
+
+                .range-setting-box {
+                    background: rgba(42, 117, 187, 0.12);
+                    border-color: #3b82f6;
+                }
+                .range-setting-header {
+                    color: #60a5fa;
+                    border-bottom-color: rgba(96, 165, 250, 0.3);
+                }
+
+                .main-btn {
+                    background: linear-gradient(
+                        to bottom,
+                        #d63031 0%,
+                        #b32a2a 100%
+                    );
+                    border-color: #8b1e1e;
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+                        0 5px 0 #8b1e1e,
+                        0 8px 10px rgba(0, 0, 0, 0.5);
+                }
+                .main-btn:hover {
+                    background: linear-gradient(
+                        to bottom,
+                        #e24545 0%,
+                        #c93434 100%
+                    );
+                }
+                .main-btn:active {
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+                        0 0px 0 #8b1e1e,
+                        0 2px 3px rgba(0, 0, 0, 0.5);
+                }
+                .main-btn:disabled {
+                    background: linear-gradient(to bottom, #444 0%, #333 100%);
+                    border-color: #222;
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.05),
+                        0 5px 0 #222;
+                }
+
+                #submit-btn {
+                    background: linear-gradient(
+                        to bottom,
+                        #cc0000 0%,
+                        #990000 100%
+                    );
+                    border-color: #660000;
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+                        0 5px 0 #550000,
+                        0 8px 10px rgba(0, 0, 0, 0.5);
+                }
+                #submit-btn:hover {
+                    background: linear-gradient(
+                        to bottom,
+                        #e60000 0%,
+                        #b30000 100%
+                    );
+                }
+                #submit-btn:active {
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+                        0 0px 0 #550000,
+                        0 2px 3px rgba(0, 0, 0, 0.5);
+                }
+
+                #back-title-btn,
+                .green-btn {
+                    background: linear-gradient(
+                        to bottom,
+                        #388e3c 0%,
+                        #1b5e20 100%
+                    );
+                    border-color: #0a330c;
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+                        0 5px 0 #0a330c,
+                        0 8px 10px rgba(0, 0, 0, 0.5);
+                }
+                #back-title-btn:hover,
+                .green-btn:hover {
+                    background: linear-gradient(
+                        to bottom,
+                        #43a047 0%,
+                        #2e7d32 100%
+                    );
+                }
+                #back-title-btn:active,
+                .green-btn:active {
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+                        0 0px 0 #0a330c,
+                        0 2px 3px rgba(0, 0, 0, 0.5);
+                }
+
+                .option-btn {
+                    background: linear-gradient(
+                        to bottom,
+                        #3a3a3a 0%,
+                        #2a2a2a 100%
+                    );
+                    color: #e0e0e0;
+                    border-color: #111;
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.05),
+                        0 4px 0 #111,
+                        0 5px 5px rgba(0, 0, 0, 0.4);
+                }
+                .option-btn:hover {
+                    background: linear-gradient(
+                        to bottom,
+                        #4a4a4a 0%,
+                        #3a3a3a 100%
+                    );
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.05),
+                        0 4px 0 #1a4269,
+                        0 5px 5px rgba(0, 0, 0, 0.4);
+                }
+                .option-btn:active {
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.05),
+                        0 0px 0 #111,
+                        0 2px 2px rgba(0, 0, 0, 0.4);
+                }
+                .option-btn.selected {
+                    background: linear-gradient(
+                        to bottom,
+                        #2c6eb5 0%,
+                        #1e528a 100%
+                    );
+                    border-color: #0d2c4f;
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+                        0 4px 0 #0d2c4f,
+                        0 5px 5px rgba(0, 0, 0, 0.4);
+                }
+                .option-btn.selected:active {
+                    box-shadow:
+                        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+                        0 0px 0 #0d2c4f,
+                        0 2px 2px rgba(0, 0, 0, 0.4);
+                }
+
+                .sub-btn {
+                    background: linear-gradient(to bottom, #333 0%, #222 100%);
+                    color: #bbb;
+                    border-color: #111;
+                    box-shadow:
+                        0 3px 0 #111,
+                        0 4px 4px rgba(0, 0, 0, 0.3);
+                }
+                .sub-btn:hover {
+                    background: linear-gradient(to bottom, #444 0%, #333 100%);
+                    color: #eee;
+                }
+                .sub-btn:active {
+                    box-shadow:
+                        0 0px 0 #111,
+                        0 1px 2px rgba(0, 0, 0, 0.3);
+                }
+
+                #giveup-btn {
+                    background: linear-gradient(
+                        to bottom,
+                        #4a2a2a 0%,
+                        #3a1a1a 100%
+                    );
+                    color: #ff8a8a;
+                    border-color: #2a0a0a;
+                    box-shadow:
+                        0 3px 0 #2a0a0a,
+                        0 4px 4px rgba(0, 0, 0, 0.3);
+                }
+                #giveup-btn:hover {
+                    background: linear-gradient(
+                        to bottom,
+                        #5a3a3a 0%,
+                        #4a2a2a 100%
+                    );
+                }
+                #giveup-btn:active {
+                    box-shadow:
+                        0 0px 0 #2a0a0a,
+                        0 1px 2px rgba(0, 0, 0, 0.3);
+                }
+
+                .chip-label {
+                    background: #2a2a2a;
+                    border-color: #444;
+                    color: #bbb;
+                }
+                .chip-checkbox input[type="checkbox"]:checked + .chip-label {
+                    background: rgba(42, 117, 187, 0.3);
+                    border-color: #4ea3f8;
+                    color: #64b5f6;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="volume-control">
+                <button
+                    class="audio-toggle"
+                    onclick="toggleMute()"
+                    id="audio-icon"
+                >
+                    🔊
+                </button>
+                <input
+                    type="range"
+                    id="volume-slider"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value="0.4"
+                    oninput="updateVolume(this.value)"
+                />
+            </div>
+
+            <!-- 1. スタート画面 -->
+            <div id="start-screen">
+                <h1>ポケモンパーツクイズ</h1>
+
+                <details class="howto-box">
+                    <summary class="howto-summary">
+                        ❓ 遊び方・モード解説
+                    </summary>
+                    <div class="howto-content">
+                        <p>
+                            <strong>【遊び方】</strong
+                            ><br />チラッと表示されたパーツを見て、どのポケモンか当てよう！
+                        </p>
+                        <p><strong>【ゲームモード】</strong></p>
+                        <ul>
+                            <li>
+                                <strong>全問制覇（チャレンジ）</strong>:
+                                絞り込んだ範囲の全問を重複なしで順に出題。何問正解できるかな？
+                            </li>
+                            <li>
+                                <strong>エンドレス（連勝）</strong>:
+                                間違えるまでずっと出題！連勝数を競おう。
+                            </li>
+                            <li>
+                                <strong>スピード（出題のみ）</strong>:
+                                スコア判定なしでテンポ重視の答え合わせモード。
+                            </li>
+                        </ul>
+                        <p>
+                            <strong>【入力形式】</strong
+                            ><br />「選択肢（4択）」または「テキスト入力（名前記述）」を選べます。（PC操作時は
+                            1〜4 キーで選択可能）
+                        </p>
+                        <p><strong>【便利機能】</strong></p>
+                        <ul>
+                            <li>
+                                <strong>見えない</strong>:
+                                画像がはじっこすぎて見えない時は再出題。
+                            </li>
+                            <li>
+                                <strong>わからん！</strong>:
+                                回答を放棄して答えと全体画像を確認
+                            </li>
+                            <li>
+                                <strong>演出切り替え</strong>:
+                                右上のスピーカーアイコンで音演出、フェード演出を切り替え。
+                            </li>
+                        </ul>
+                    </div>
+                </details>
+
+                <div class="form-group">
+                    <label for="game-rule-select">ゲームモード</label>
+                    <select id="game-rule-select">
+                        <option value="challenge" selected="">
+                            全問制覇（チャレンジ）
+                        </option>
+                        <option value="endless">
+                            エンドレス（連勝アタック）
+                        </option>
+                        <option value="speed">
+                            スピードモード（出題のみ）
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="answer-type-select">回答方法</label>
+                    <select id="answer-type-select">
+                        <option value="choice" selected="">
+                            選択肢（4択）
+                        </option>
+                        <option value="text">テキスト入力（自由記述）</option>
+                    </select>
+                </div>
+
+                <!-- 出題範囲設定（囲み枠エリア） -->
+                <div class="range-setting-box">
+                    <div class="range-setting-header">🎯 出題範囲の設定</div>
+
+                    <div class="range-setting-guide">
+                        お好みの条件で問題の絞り込みができます：
+                        <ul>
+                            <li>
+                                <strong>地方（世代）で絞る</strong
+                                >（複数選択可能）
+                            </li>
+                            <li><strong>タイプで絞る</strong></li>
+                        </ul>
+                    </div>
+
+                    <!-- 複数選択可能な地方・世代フィルター -->
+                    <div class="form-group">
+                        <div class="region-header-row">
+                            <label style="margin-bottom: 0"
+                                >🗺️ 地方・世代フィルター</label
+                            >
+                            <div class="mini-btn-group">
+                                <button
+                                    type="button"
+                                    class="mini-btn"
+                                    onclick="selectAllRegions(true)"
+                                >
+                                    全選択
+                                </button>
+                                <button
+                                    type="button"
+                                    class="mini-btn"
+                                    onclick="selectAllRegions(false)"
+                                >
+                                    全解除
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="region-grid" id="region-checkbox-grid">
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-kanto"
+                                    value="kanto"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-kanto" class="chip-label"
+                                    >カントー</label
+                                >
+                            </div>
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-johto"
+                                    value="johto"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-johto" class="chip-label"
+                                    >ジョウト</label
+                                >
+                            </div>
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-hoenn"
+                                    value="hoenn"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-hoenn" class="chip-label"
+                                    >ホウエン</label
+                                >
+                            </div>
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-sinnoh"
+                                    value="sinnoh"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-sinnoh" class="chip-label"
+                                    >シンオウ</label
+                                >
+                            </div>
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-unova"
+                                    value="unova"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-unova" class="chip-label"
+                                    >イッシュ</label
+                                >
+                            </div>
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-kalos"
+                                    value="kalos"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-kalos" class="chip-label"
+                                    >カロス</label
+                                >
+                            </div>
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-alola"
+                                    value="alola"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-alola" class="chip-label"
+                                    >アローラ</label
+                                >
+                            </div>
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-galar"
+                                    value="galar"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-galar" class="chip-label"
+                                    >ガラル</label
+                                >
+                            </div>
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-hisui"
+                                    value="hisui"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-hisui" class="chip-label"
+                                    >ヒスイ</label
+                                >
+                            </div>
+                            <div class="chip-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="reg-paldea"
+                                    value="paldea"
+                                    class="region-cb"
+                                    checked=""
+                                />
+                                <label for="reg-paldea" class="chip-label"
+                                    >パルデア</label
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- タイプ絞り込み -->
+                    <div class="form-group" style="margin-bottom: 0">
+                        <label for="type-select">🧪 タイプ絞り込み</label>
+                        <select id="type-select">
+                            <option value="all" selected="">
+                                すべてのタイプ
+                            </option>
+                            <option value="normal">ノーマル</option>
+                            <option value="fire">ほのお</option>
+                            <option value="water">みず</option>
+                            <option value="grass">くさ</option>
+                            <option value="electric">でんき</option>
+                            <option value="ice">こおり</option>
+                            <option value="fighting">かくとう</option>
+                            <option value="poison">どく</option>
+                            <option value="ground">じめん</option>
+                            <option value="flying">ひこう</option>
+                            <option value="psychic">エスパー</option>
+                            <option value="bug">むし</option>
+                            <option value="rock">いわ</option>
+                            <option value="ghost">ゴースト</option>
+                            <option value="dragon">ドラゴン</option>
+                            <option value="dark">あく</option>
+                            <option value="steel">はがね</option>
+                            <option value="fairy">フェアリー</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="difficulty-select">難易度（表示範囲）</label>
+                    <select id="difficulty-select">
+                        <option value="0.35">かんたん（広め）</option>
+                        <option value="0.20" selected="">ふつう（標準）</option>
+                        <option value="0.10">むずかしい（超拡大）</option>
+                    </select>
+                </div>
+
+                <div id="start-error" class="error-msg hidden"></div>
+
+                <p class="sound-warning">
+                    ⚠️ 出題時、回答時に音が出ますので<br />端末の音量にご注意ください！
+                </p>
+                <button
+                    id="start-btn"
+                    class="main-btn"
+                    style="margin-top: 0.5rem"
+                    onclick="startGame()"
+                >
+                    スタート！
+                </button>
+            </div>
+
+            <!-- 2. クイズ画面 -->
+            <div id="quiz-screen" class="hidden">
+                <div class="quiz-header-info">
+                    <span id="mode-label">モード</span>
+                    <span id="score-badge" class="score-badge">0 / 0</span>
+                </div>
+
+                <div class="image-container">
+                    <canvas
+                        id="quiz-canvas"
+                        class="fade-target"
+                        width="250"
+                        height="250"
+                    ></canvas>
+                    <img
+                        id="full-image"
+                        class="fade-target hidden"
+                        alt="Pokemon"
+                    />
+                </div>
+
+                <div id="pokemon-name-display">だ〜れだ？</div>
+
+                <div class="options-grid" id="options-container"></div>
+
+                <div id="text-input-container" class="hidden">
+                    <input
+                        type="text"
+                        id="answer-input"
+                        placeholder="ポケモンの名前を入力..."
+                        oninput="checkTextInput()"
+                        onkeypress="handleKeyPress(event)"
+                    />
+                </div>
+
+                <div id="speed-container" class="hidden">
+                    <button
+                        id="reveal-btn"
+                        class="main-btn"
+                        onclick="processAnswer(true)"
+                    >
+                        答えを見る
+                    </button>
+                </div>
+
+                <div class="sub-btn-container" id="sub-buttons">
+                    <button
+                        id="invisible-btn"
+                        class="sub-btn"
+                        onclick="skipQuestion()"
+                    >
+                        見えない（再出題）
+                    </button>
+                    <button
+                        id="giveup-btn"
+                        class="sub-btn"
+                        onclick="processAnswer(false, true)"
+                    >
+                        わからん！
+                    </button>
+                    <button id="quit-btn" class="sub-btn" onclick="toTitle()">
+                        ゲームをやめる
+                    </button>
+                </div>
+
+                <button
+                    id="submit-btn"
+                    class="main-btn"
+                    onclick="checkUserAnswer()"
+                    disabled=""
+                >
+                    キミに決めた！
+                </button>
+
+                <div
+                    id="next-controls"
+                    class="hidden"
+                    style="display: flex; gap: 10px"
+                >
+                    <button
+                        id="back-title-btn"
+                        class="main-btn"
+                        onclick="toTitle()"
+                    >
+                        タイトルへ
+                    </button>
+                    <button
+                        id="next-btn"
+                        class="main-btn"
+                        onclick="loadQuestion()"
+                    >
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. リザルト画面 -->
+            <div id="result-screen" class="hidden">
+                <h1>結果発表！</h1>
+                <div class="result-box">
+                    <div id="result-condition" class="result-title"></div>
+                    <div
+                        id="result-status"
+                        style="font-weight: bold; margin-top: 0.4rem"
+                    >
+                        全問制覇達成！
+                    </div>
+                    <div id="result-score" class="result-score">12 / 12</div>
+                </div>
+
+                <div class="share-buttons">
+                    <button class="btn-share btn-x" onclick="shareResult('x')">
+                        Twitterで結果をシェア
+                    </button>
+                    <button
+                        class="btn-share btn-bsky"
+                        onclick="shareResult('bsky')"
+                    >
+                        Blueskyで結果をシェア
+                    </button>
+                </div>
+                <button class="main-btn green-btn" onclick="toTitle()">
+                    タイトルに戻る
+                </button>
+            </div>
+
+            <!-- 免責事項フッター -->
+            <footer class="disclaimer-footer">
+                <p class="disclaimer-title">【免責事項・権利表記】</p>
+                <p>
+                    当サイトは個人が制作した非公式のファンサイトであり、株式会社ポケモン、任天堂株式会社、株式会社ゲームフリーク、株式会社クリーチャーズ等とは一切関係ありません。<br />
+                    作品内で使用している名称・画像の著作権・商標権は、各権利所有者に帰属します。<br />
+                    本サイトのソースコードおよび構築処理には、AI（Google
+                    Gemini）による生成コードが含まれています。<br />
+                    当サイトの利用により生じたトラブルや損害等について、制作者は一切の責任を負いません。
+                </p>
+
+                <p style="margin-top: 0.8rem">
+                    <strong>【お問い合わせ】</strong><br />
+                    万が一、権利者様からの削除要請等がございましたら、速やかに対処いたしますので、お手数ですが
+                    <a
+                        href="https://docs.google.com/forms/d/e/1FAIpQLSeLNh4i3RrSuDT2rdO3-LoXYuFDFuU39vH9ipQyW37OHwjImw/viewform?usp=publish-editor"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style="
+                            color: var(--accent-color);
+                            text-decoration: none;
+                        "
+                        >問い合わせ用Google Form</a
+                    >
+                    までご連絡ください。<br />
+                    不具合報告やフィードバック、感想などもこちらのフォームにてお送りいただけますと幸いです。
+                </p>
+
+                <details class="data-source-box">
+                    <summary class="data-source-summary">
+                        🌐 データ取得元について
+                    </summary>
+                    <div class="data-source-content">
+                        当サイトで表示しているポケモンの各種データおよび画像素材は、<a
+                            href="https://pokeapi.co/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            >PokeAPI</a
+                        >
+                        より取得・利用しています。
+                    </div>
+                </details>
+            </footer>
+        </div>
+
+        <script>
+            // 地方・図鑑番号データ定義
+            const REGION_DEFINITIONS = [
+                { id: "kanto", name: "カントー", min: 1, max: 151 },
+                { id: "johto", name: "ジョウト", min: 152, max: 251 },
+                { id: "hoenn", name: "ホウエン", min: 252, max: 386 },
+                { id: "sinnoh", name: "シンオウ", min: 387, max: 493 },
+                { id: "unova", name: "イッシュ", min: 494, max: 649 },
+                { id: "kalos", name: "カロス", min: 650, max: 721 },
+                { id: "alola", name: "アローラ", min: 722, max: 809 },
+                { id: "galar", name: "ガラル", min: 810, max: 898 },
+                { id: "hisui", name: "ヒスイ", min: 899, max: 905 },
+                { id: "paldea", name: "パルデア", min: 906, max: 1025 },
+            ];
+
+            // 日本語タイプ表記マップ
+            const TYPE_NAMES_JA = {
+                all: "すべてのタイプ",
+                normal: "ノーマル",
+                fire: "ほのお",
+                water: "みず",
+                grass: "くさ",
+                electric: "でんき",
+                ice: "こおり",
+                fighting: "かくとう",
+                poison: "どく",
+                ground: "じめん",
+                flying: "ひこう",
+                psychic: "エスパー",
+                bug: "むし",
+                rock: "いわ",
+                ghost: "ゴースト",
+                dragon: "ドラゴン",
+                dark: "あく",
+                steel: "はがね",
+                fairy: "フェアリー",
+            };
+
+            // --- 表記揺れ正規化関数 ---
+            function normalizePokemonName(str) {
+                if (!str) return "";
+
+                return (
+                    str
+                        .trim()
+                        // 1. ひらがなをカタカナに変換（ぴかちゅう -> ピカチュウ）
+                        .replace(/[\u3041-\u3096]/g, (match) =>
+                            String.fromCharCode(match.charCodeAt(0) + 0x60),
+                        )
+                        // 2. 全角英数字を半角に変換（ポリゴン２ -> ポリゴン2）
+                        .normalize("NFKC")
+                        // 3. 英字を大文字に統一
+                        .toUpperCase()
+                        // 4. 各種「オスの表記」を全角の「♂」に寄せる
+                        .replace(
+                            /(おす|オス|男|\(♂\)|\(おす\)|\(オス\)|_M|-M|\sM|M)$/i,
+                            "♂",
+                        )
+                        // 5. 各種「メスの表記」を全角の「♀」に寄せる
+                        .replace(
+                            /(めす|メス|女|\(♀\)|\(めす\)|\(メス\)|_F|-F|\sF|F)$/i,
+                            "♀",
+                        )
+                        // 6. 途中のスペースや記号（：や・など）を削除
+                        .replace(/[\s ・：:\-ー_]/g, "")
+                );
+            }
+
+            // --- グローバル状態 ---
+            let currentCorrectPokemon = null;
+            let selectedAnswerName = null;
+            let lastCorrectId = null;
+
+            // 設定状態
+            let gameRule = "challenge";
+            let answerType = "choice";
+            let filterSummaryLabel = "";
+
+            // デッキ・スコア管理
+            let availableDeck = [];
+            let challengeQueue = [];
+            let totalChallengeCount = 0;
+            let currentScore = 0;
+            let streakCount = 0;
+
+            let revealTimers = [];
+            const pokemonCache = {};
+            const typePokemonCache = {};
+
+            // 音量管理
+            let savedVolume = 0.4;
+            let isMuted = false;
+
+            const soundFiles = {
+                start: new Audio("sounds/start.mp3"),
+                fanfare: new Audio("sounds/fanfare.mp3"),
+                select: new Audio("sounds/select.mp3"),
+            };
+
+            const soundRatios = { start: 1.0, fanfare: 1.0, select: 0.6 };
+
+            // Web Audio API による効果音合成（フォールバック）
+            let audioCtx = null;
+            function playSynthSound(type) {
+                if (isMuted || savedVolume === 0) return;
+                try {
+                    if (!audioCtx) {
+                        audioCtx = new (
+                            window.AudioContext || window.webkitAudioContext
+                        )();
+                    }
+                    if (audioCtx.state === "suspended") {
+                        audioCtx.resume();
+                    }
+
+                    const now = audioCtx.currentTime;
+                    const gain = audioCtx.createGain();
+                    gain.gain.value = savedVolume * 0.2;
+                    gain.connect(audioCtx.destination);
+
+                    if (type === "select") {
+                        const osc = audioCtx.createOscillator();
+                        osc.frequency.setValueAtTime(440, now);
+                        osc.frequency.exponentialRampToValueAtTime(
+                            880,
+                            now + 0.08,
+                        );
+                        osc.connect(gain);
+                        osc.start(now);
+                        osc.stop(now + 0.08);
+                    } else if (type === "fanfare") {
+                        const osc1 = audioCtx.createOscillator();
+                        const osc2 = audioCtx.createOscillator();
+                        osc1.type = "sine";
+                        osc2.type = "sine";
+                        osc1.frequency.setValueAtTime(659.25, now);
+                        osc1.frequency.setValueAtTime(880.0, now + 0.12);
+                        osc1.connect(gain);
+                        osc2.connect(gain);
+                        osc1.start(now);
+                        osc1.stop(now + 0.35);
+                    } else if (type === "start") {
+                        const osc = audioCtx.createOscillator();
+                        osc.type = "triangle";
+                        osc.frequency.setValueAtTime(300, now);
+                        osc.frequency.exponentialRampToValueAtTime(
+                            600,
+                            now + 0.15,
+                        );
+                        osc.connect(gain);
+                        osc.start(now);
+                        osc.stop(now + 0.15);
+                    }
+                } catch (e) {
+                    console.log("Synth sound error:", e);
+                }
+            }
+
+            applyVolume();
+
+            function applyVolume() {
+                const actualVolume = isMuted ? 0 : savedVolume;
+                Object.keys(soundFiles).forEach((key) => {
+                    soundFiles[key].volume = Math.min(
+                        1,
+                        actualVolume * soundRatios[key],
+                    );
+                });
+            }
+
+            function updateVolume(val) {
+                savedVolume = parseFloat(val);
+                isMuted = savedVolume === 0;
+                document.getElementById("audio-icon").textContent = isMuted
+                    ? "🔇"
+                    : "🔊";
+                applyVolume();
+            }
+
+            function toggleMute() {
+                isMuted = !isMuted;
+                const slider = document.getElementById("volume-slider");
+                document.getElementById("audio-icon").textContent = isMuted
+                    ? "🔇"
+                    : "🔊";
+                if (!isMuted && savedVolume === 0) savedVolume = 0.4;
+                slider.value = isMuted ? 0 : savedVolume;
+                applyVolume();
+            }
+
+            function playSound(audioObject, type = "select") {
+                if (isMuted || savedVolume === 0) return;
+                Object.values(soundFiles).forEach((sound) => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                });
+                audioObject.play().catch(() => {
+                    playSynthSound(type);
+                });
+            }
+
+            function clearRevealTimers() {
+                revealTimers.forEach((timerId) => clearTimeout(timerId));
+                revealTimers = [];
+            }
+
+            // --- 地方全選択・全解除 ---
+            function selectAllRegions(check) {
+                document.querySelectorAll(".region-cb").forEach((cb) => {
+                    cb.checked = check;
+                });
+            }
+
+            // --- ゲーム進行ロジック ---
+            async function startGame() {
+                const startBtn = document.getElementById("start-btn");
+                const errorEl = document.getElementById("start-error");
+                errorEl.classList.add("hidden");
+                startBtn.disabled = true;
+                startBtn.textContent = "データ準備中...";
+
+                gameRule = document.getElementById("game-rule-select").value;
+                answerType =
+                    document.getElementById("answer-type-select").value;
+
+                const selectedRegionCbs = Array.from(
+                    document.querySelectorAll(".region-cb:checked"),
+                );
+                const selectedType =
+                    document.getElementById("type-select").value;
+
+                try {
+                    if (selectedRegionCbs.length === 0) {
+                        throw new Error(
+                            "地方を少なくとも1つ選択してください。",
+                        );
+                    }
+
+                    const selectedRegionIds = selectedRegionCbs.map(
+                        (cb) => cb.value,
+                    );
+
+                    // 出題可能なポケモンIDリストをフィルタリング生成
+                    availableDeck = await getMultiFilteredPokemonIds(
+                        selectedRegionIds,
+                        selectedType,
+                    );
+
+                    if (availableDeck.length === 0) {
+                        throw new Error(
+                            "選択した条件（地方・タイプ）に該当するポケモンが見つかりませんでした。条件を変更してください。",
+                        );
+                    }
+
+                    if (
+                        answerType === "choice" &&
+                        availableDeck.length < 4 &&
+                        gameRule !== "speed"
+                    ) {
+                        throw new Error(
+                            `条件に合うポケモンが${availableDeck.length}体しかいないため、4択クイズを作成できません。絞り込みを緩めてください。`,
+                        );
+                    }
+
+                    // フィルタ概要ラベルの構築（リザルト画面・SNSシェア用）
+                    let regNames = selectedRegionCbs.map((cb) => {
+                        const reg = REGION_DEFINITIONS.find(
+                            (r) => r.id === cb.value,
+                        );
+                        return reg ? reg.name : "";
+                    });
+
+                    let regStr =
+                        regNames.length === 9 ? "全地方" : regNames.join("・");
+                    filterSummaryLabel = `【${regStr} × ${TYPE_NAMES_JA[selectedType]}】`;
+
+                    // 初期化
+                    currentScore = 0;
+                    streakCount = 0;
+                    if (gameRule === "challenge") {
+                        challengeQueue = [...availableDeck];
+                        for (let i = challengeQueue.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [challengeQueue[i], challengeQueue[j]] = [
+                                challengeQueue[j],
+                                challengeQueue[i],
+                            ];
+                        }
+                        totalChallengeCount = challengeQueue.length;
+                    }
+
+                    document
+                        .getElementById("start-screen")
+                        .classList.add("hidden");
+                    document
+                        .getElementById("result-screen")
+                        .classList.add("hidden");
+                    document
+                        .getElementById("quiz-screen")
+                        .classList.remove("hidden");
+
+                    loadQuestion();
+                } catch (err) {
+                    errorEl.textContent = err.message;
+                    errorEl.classList.remove("hidden");
+                } finally {
+                    startBtn.disabled = false;
+                    startBtn.textContent = "スタート！";
+                }
+            }
+
+            function toTitle() {
+                clearRevealTimers();
+                Object.values(soundFiles).forEach((sound) => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                });
+                document.getElementById("quiz-screen").classList.add("hidden");
+                document
+                    .getElementById("result-screen")
+                    .classList.add("hidden");
+                document
+                    .getElementById("start-screen")
+                    .classList.remove("hidden");
+            }
+
+            async function loadQuestion() {
+                clearRevealTimers();
+                selectedAnswerName = null;
+
+                const modeLabel = document.getElementById("mode-label");
+                const scoreBadge = document.getElementById("score-badge");
+
+                if (gameRule === "challenge") {
+                    modeLabel.textContent = "全問制覇";
+                    // 現在何問目かを計算（全問題数 - 残り問題数 + 1）
+                    const currentQuestionNum =
+                        totalChallengeCount - challengeQueue.length + 1;
+                    scoreBadge.textContent = `${currentQuestionNum}問目／${totalChallengeCount}問中${currentScore}問正解`;
+                } else if (gameRule === "endless") {
+                    modeLabel.textContent = "エンドレス";
+                    scoreBadge.textContent = `${streakCount} 問連続正解中！🔥`;
+                } else {
+                    modeLabel.textContent = "スピード";
+                    scoreBadge.textContent = "--";
+                }
+
+                document.getElementById("pokemon-name-display").textContent =
+                    "だ〜れだ？";
+                document.getElementById("submit-btn").disabled = true;
+                document
+                    .getElementById("next-controls")
+                    .classList.add("hidden");
+                document
+                    .getElementById("sub-buttons")
+                    .classList.remove("hidden");
+
+                const canvas = document.getElementById("quiz-canvas");
+                const fullImg = document.getElementById("full-image");
+
+                canvas.style.transition = "none";
+                fullImg.style.transition = "none";
+                canvas.classList.remove("show", "hidden");
+                fullImg.classList.remove("show");
+                fullImg.classList.add("hidden");
+
+                void canvas.offsetWidth;
+
+                const isNoEffect = isMuted || savedVolume === 0;
+                canvas.style.transition = isNoEffect ? "none" : "";
+                fullImg.style.transition = isNoEffect ? "none" : "";
+
+                const optionsContainer =
+                    document.getElementById("options-container");
+                const textContainer = document.getElementById(
+                    "text-input-container",
+                );
+                const speedContainer =
+                    document.getElementById("speed-container");
+                const answerInput = document.getElementById("answer-input");
+
+                optionsContainer.classList.add("hidden");
+                textContainer.classList.add("hidden");
+                speedContainer.classList.add("hidden");
+
+                if (gameRule === "speed") {
+                    speedContainer.classList.remove("hidden");
+                    document
+                        .getElementById("submit-btn")
+                        .classList.add("hidden");
+                    document
+                        .getElementById("giveup-btn")
+                        .classList.add("hidden");
+                } else if (answerType === "choice") {
+                    optionsContainer.classList.remove("hidden");
+                    document
+                        .getElementById("submit-btn")
+                        .classList.remove("hidden");
+                    document
+                        .getElementById("giveup-btn")
+                        .classList.remove("hidden");
+                    optionsContainer.innerHTML = "";
+                } else if (answerType === "text") {
+                    textContainer.classList.remove("hidden");
+                    document
+                        .getElementById("submit-btn")
+                        .classList.remove("hidden");
+                    document
+                        .getElementById("giveup-btn")
+                        .classList.remove("hidden");
+                    answerInput.value = "";
+                    answerInput.disabled = false;
+                }
+
+                const cropRatio = parseFloat(
+                    document.getElementById("difficulty-select").value,
+                );
+
+                let correctId = null;
+                if (gameRule === "challenge") {
+                    correctId = challengeQueue[challengeQueue.length - 1];
+                } else {
+                    do {
+                        correctId =
+                            availableDeck[
+                                Math.floor(Math.random() * availableDeck.length)
+                            ];
+                    } while (
+                        correctId === lastCorrectId &&
+                        availableDeck.length > 1
+                    );
+                }
+                lastCorrectId = correctId;
+
+                let choiceIds = [correctId];
+                if (gameRule !== "speed" && answerType === "choice") {
+                    const pool =
+                        availableDeck.length >= 4
+                            ? availableDeck
+                            : Array.from({ length: 1025 }, (_, i) => i + 1);
+                    while (choiceIds.length < 4) {
+                        const randId =
+                            pool[Math.floor(Math.random() * pool.length)];
+                        if (!choiceIds.includes(randId)) choiceIds.push(randId);
+                    }
+                    for (let i = choiceIds.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [choiceIds[i], choiceIds[j]] = [
+                            choiceIds[j],
+                            choiceIds[i],
+                        ];
+                    }
+                }
+
+                const pokemonList = await Promise.all(
+                    choiceIds.map((id) => getPokemonData(id)),
+                );
+                currentCorrectPokemon = pokemonList.find(
+                    (p) => p.id === correctId,
+                );
+
+                fullImg.src = currentCorrectPokemon.imgUrl;
+                await drawCroppedImage(currentCorrectPokemon.imgUrl, cropRatio);
+
+                playSound(soundFiles.start, "start");
+                setTimeout(() => {
+                    canvas.classList.add("show");
+                }, 50);
+
+                if (gameRule !== "speed" && answerType === "choice") {
+                    pokemonList.forEach((pokemon, index) => {
+                        const btn = document.createElement("button");
+                        btn.className = "option-btn";
+                        btn.textContent = `${index + 1}. ${pokemon.name}`;
+                        btn.onclick = () => selectOption(btn, pokemon.name);
+                        optionsContainer.appendChild(btn);
+                    });
+                } else if (gameRule !== "speed" && answerType === "text") {
+                    answerInput.focus();
+                }
+            }
+
+            function selectOption(selectedBtn, name) {
+                document
+                    .querySelectorAll(".option-btn")
+                    .forEach((btn) => btn.classList.remove("selected"));
+                selectedBtn.classList.add("selected");
+                selectedAnswerName = name;
+                document.getElementById("submit-btn").disabled = false;
+            }
+
+            function checkTextInput() {
+                const val = document
+                    .getElementById("answer-input")
+                    .value.trim();
+                selectedAnswerName = val;
+                document.getElementById("submit-btn").disabled = val === "";
+            }
+
+            function handleKeyPress(event) {
+                if (
+                    event.key === "Enter" &&
+                    !document.getElementById("submit-btn").disabled
+                ) {
+                    checkUserAnswer();
+                }
+            }
+
+            window.addEventListener("keydown", (e) => {
+                const quizScreen = document.getElementById("quiz-screen");
+                if (quizScreen.classList.contains("hidden")) return;
+
+                if (answerType === "choice" && gameRule !== "speed") {
+                    const keyNum = parseInt(e.key, 10);
+                    if (keyNum >= 1 && keyNum <= 4) {
+                        const btns = document.querySelectorAll(".option-btn");
+                        if (btns[keyNum - 1] && !btns[keyNum - 1].disabled) {
+                            btns[keyNum - 1].click();
+                        }
+                    }
+                }
+
+                if (e.key === "Enter") {
+                    const submitBtn = document.getElementById("submit-btn");
+                    const nextBtn = document.getElementById("next-btn");
+                    const nextControls =
+                        document.getElementById("next-controls");
+
+                    if (!nextControls.classList.contains("hidden")) {
+                        nextBtn.click();
+                    } else if (
+                        !submitBtn.classList.contains("hidden") &&
+                        !submitBtn.disabled
+                    ) {
+                        checkUserAnswer();
+                    }
+                }
+            });
+
+            function skipQuestion() {
+                loadQuestion();
+            }
+
+            function checkUserAnswer() {
+                if (!selectedAnswerName) return;
+
+                // 表記揺れ対策：両方を正規化してから比較
+                const inputNorm = normalizePokemonName(selectedAnswerName);
+                const targetNorm = normalizePokemonName(
+                    currentCorrectPokemon.name,
+                );
+
+                const isCorrect = inputNorm === targetNorm;
+                processAnswer(isCorrect, false);
+            }
+
+            function processAnswer(isCorrect, isGiveup = false) {
+                playSound(soundFiles.fanfare, "fanfare");
+
+                let resultText = "";
+                if (gameRule === "speed") {
+                    resultText = `正解は ${currentCorrectPokemon.name}！`;
+                } else if (isGiveup) {
+                    resultText = `正解は ${currentCorrectPokemon.name} でした！`;
+                } else if (isCorrect) {
+                    resultText = `⭕️ 正解！ ${currentCorrectPokemon.name}`;
+                } else {
+                    resultText = `❌ 残念... 正解は ${currentCorrectPokemon.name}`;
+                }
+
+                document.getElementById("pokemon-name-display").textContent =
+                    resultText;
+
+                if (gameRule === "speed") {
+                    document
+                        .getElementById("speed-container")
+                        .classList.add("hidden");
+                } else {
+                    if (answerType === "choice") {
+                        document
+                            .querySelectorAll(".option-btn")
+                            .forEach((btn) => (btn.disabled = true));
+                    } else if (answerType === "text") {
+                        document.getElementById("answer-input").disabled = true;
+                    }
+                    document
+                        .getElementById("submit-btn")
+                        .classList.add("hidden");
+                }
+
+                document.getElementById("sub-buttons").classList.add("hidden");
+                revealFullImage();
+
+                const nextBtn = document.getElementById("next-btn");
+
+                if (gameRule === "challenge") {
+                    challengeQueue.pop();
+                    if (isCorrect) currentScore++;
+
+                    if (challengeQueue.length === 0) {
+                        nextBtn.textContent = "結果を見る";
+                        nextBtn.onclick = () => showFinalResult(true);
+                    } else {
+                        nextBtn.textContent = "次の問題へ";
+                        nextBtn.onclick = () => loadQuestion();
+                    }
+                } else if (gameRule === "endless") {
+                    if (isCorrect && !isGiveup) {
+                        streakCount++;
+                        nextBtn.textContent = "次の問題へ";
+                        nextBtn.onclick = () => loadQuestion();
+                    } else {
+                        nextBtn.textContent = "結果を見る";
+                        nextBtn.onclick = () => showFinalResult(false);
+                    }
+                } else {
+                    nextBtn.textContent = "次の問題へ";
+                    nextBtn.onclick = () => loadQuestion();
+                }
+            }
+
+            function revealFullImage() {
+                clearRevealTimers();
+                const canvas = document.getElementById("quiz-canvas");
+                const fullImg = document.getElementById("full-image");
+                const isNoEffect = isMuted || savedVolume === 0;
+
+                canvas.style.transition = isNoEffect ? "none" : "";
+                fullImg.style.transition = isNoEffect ? "none" : "";
+                fullImg.classList.remove("hidden");
+
+                const timer1 = setTimeout(() => {
+                    fullImg.classList.add("show");
+                    canvas.classList.remove("show");
+                }, 50);
+
+                const timer2 = setTimeout(
+                    () => {
+                        canvas.classList.add("hidden");
+                    },
+                    isNoEffect ? 0 : 5000,
+                );
+
+                revealTimers.push(timer1, timer2);
+                document
+                    .getElementById("next-controls")
+                    .classList.remove("hidden");
+            }
+
+            function showFinalResult(isChallengeComplete) {
+                document.getElementById("quiz-screen").classList.add("hidden");
+                document
+                    .getElementById("result-screen")
+                    .classList.remove("hidden");
+
+                const condEl = document.getElementById("result-condition");
+                const statusEl = document.getElementById("result-status");
+                const scoreEl = document.getElementById("result-score");
+
+                condEl.textContent = filterSummaryLabel;
+
+                if (gameRule === "challenge") {
+                    if (currentScore === totalChallengeCount) {
+                        statusEl.textContent = "🎉 ALL CLEAR!（全問正解）";
+                    } else {
+                        statusEl.textContent = "チャレンジ終了！";
+                    }
+                    scoreEl.textContent = `${currentScore} / ${totalChallengeCount} 問正解`;
+                } else if (gameRule === "endless") {
+                    statusEl.textContent = "ゲームオーバー！";
+                    scoreEl.textContent = `連続正解数: ${streakCount}問`;
+                }
+            }
+
+            function shareResult(platform = "x") {
+                let text = `パーツで当てる！ポケモンクイズ\n${filterSummaryLabel}\n`;
+
+                if (gameRule === "challenge") {
+                    text += `結果: ${currentScore} / ${totalChallengeCount} 問正解！\n`;
+                    if (currentScore === totalChallengeCount)
+                        text += `🎉 全問正解達成！\n`;
+                } else if (gameRule === "endless") {
+                    text += `記録: ${streakCount}問 連続正解！🔥\n`;
+                }
+
+                const pageUrl = window.location.href;
+
+                if (platform === "bsky") {
+                    // Blueskyはtext内にURLも含めて指定します
+                    const fullText = `${text}#ポケモンパーツクイズ\n${pageUrl}`;
+                    const shareUrl = `https://bsky.app/intent/compose?text=${encodeURIComponent(fullText)}`;
+                    window.open(shareUrl, "_blank");
+                } else {
+                    // X (旧Twitter) 用
+                    text += `#ポケモンパーツクイズ\n`;
+                    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`;
+                    window.open(shareUrl, "_blank");
+                }
+            }
+
+            // --- 複合フィルタリング（地方複数 × タイプ） ---
+            async function getMultiFilteredPokemonIds(regionIds, type) {
+                // 1. 選択された地方のID範囲の和集合を取得
+                let filteredIds = [];
+                regionIds.forEach((regId) => {
+                    const reg = REGION_DEFINITIONS.find((r) => r.id === regId);
+                    if (reg) {
+                        for (let i = reg.min; i <= reg.max; i++) {
+                            filteredIds.push(i);
+                        }
+                    }
+                });
+
+                // 2. タイプ指定がある場合の絞り込み
+                if (type !== "all") {
+                    if (!typePokemonCache[type]) {
+                        const res = await fetch(
+                            `https://pokeapi.co/api/v2/type/${type}`,
+                        );
+                        const data = await res.json();
+                        typePokemonCache[type] = data.pokemon
+                            .map((p) => {
+                                const parts = p.pokemon.url
+                                    .split("/")
+                                    .filter(Boolean);
+                                return parseInt(parts[parts.length - 1], 10);
+                            })
+                            .filter((id) => id <= 1025);
+                    }
+                    const typeSet = new Set(typePokemonCache[type]);
+                    filteredIds = filteredIds.filter((id) => typeSet.has(id));
+                }
+
+                return filteredIds;
+            }
+
+            async function getPokemonData(id) {
+                if (pokemonCache[id]) return pokemonCache[id];
+                const [speciesRes, pokemonRes] = await Promise.all([
+                    fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`),
+                    fetch(`https://pokeapi.co/api/v2/pokemon/${id}/`),
+                ]);
+                const speciesData = await speciesRes.json();
+                const pokemonData = await pokemonRes.json();
+
+                const jaName = speciesData.names.find(
+                    (n) =>
+                        n.language.name === "ja-Hrkt" ||
+                        n.language.name === "ja",
+                ).name;
+                const genusObj = speciesData.genera.find(
+                    (g) =>
+                        g.language.name === "ja-Hrkt" ||
+                        g.language.name === "ja",
+                );
+                const genus = genusObj ? genusObj.genus : "ポケモン";
+                const types = pokemonData.types.map((t) => t.type.name);
+
+                const imgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+                const fullData = { id, name: jaName, genus, types, imgUrl };
+                pokemonCache[id] = fullData;
+                return fullData;
+            }
+
+            function drawCroppedImage(imgUrl, cropRatio) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    img.src = imgUrl;
+
+                    img.onload = () => {
+                        const tempCanvas = document.createElement("canvas");
+                        tempCanvas.width = img.width;
+                        tempCanvas.height = img.height;
+                        const tempCtx = tempCanvas.getContext("2d");
+                        tempCtx.drawImage(img, 0, 0);
+
+                        const imgData = tempCtx.getImageData(
+                            0,
+                            0,
+                            img.width,
+                            img.height,
+                        ).data;
+                        const opaquePixels = [];
+
+                        for (let y = 0; y < img.height; y += 2) {
+                            for (let x = 0; x < img.width; x += 2) {
+                                if (imgData[(y * img.width + x) * 4 + 3] > 50) {
+                                    opaquePixels.push({ x, y });
+                                }
+                            }
+                        }
+
+                        if (opaquePixels.length === 0) {
+                            resolve();
+                            return;
+                        }
+
+                        const cropSize = img.width * cropRatio;
+                        let bestSx = 0,
+                            bestSy = 0;
+                        let maxOpaqueCount = -1;
+
+                        for (let attempt = 0; attempt < 25; attempt++) {
+                            const randomPixel =
+                                opaquePixels[
+                                    Math.floor(
+                                        Math.random() * opaquePixels.length,
+                                    )
+                                ];
+                            const sx = Math.max(
+                                0,
+                                Math.min(
+                                    img.width - cropSize,
+                                    randomPixel.x - cropSize / 2,
+                                ),
+                            );
+                            const sy = Math.max(
+                                0,
+                                Math.min(
+                                    img.height - cropSize,
+                                    randomPixel.y - cropSize / 2,
+                                ),
+                            );
+
+                            let count = 0;
+                            const step = Math.max(1, Math.floor(cropSize / 15));
+                            for (let cy = sy; cy < sy + cropSize; cy += step) {
+                                for (
+                                    let cx = sx;
+                                    cx < sx + cropSize;
+                                    cx += step
+                                ) {
+                                    const idx =
+                                        (Math.floor(cy) * img.width +
+                                            Math.floor(cx)) *
+                                            4 +
+                                        3;
+                                    if (imgData[idx] > 50) count++;
+                                }
+                            }
+
+                            if (count > maxOpaqueCount) {
+                                maxOpaqueCount = count;
+                                bestSx = sx;
+                                bestSy = sy;
+                            }
+                            if (
+                                count >
+                                (cropSize / step) * (cropSize / step) * 0.35
+                            )
+                                break;
+                        }
+
+                        const canvas = document.getElementById("quiz-canvas");
+                        const ctx = canvas.getContext("2d");
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(
+                            img,
+                            bestSx,
+                            bestSy,
+                            cropSize,
+                            cropSize,
+                            0,
+                            0,
+                            canvas.width,
+                            canvas.height,
+                        );
+                        resolve();
+                    };
+                });
+            }
+
+            // --- モード選択時の回答方法プルダウン制御 ---
+            function updateInputMethodDisabledState() {
+                const ruleSelect = document.getElementById("game-rule-select");
+                const inputMethodSelect =
+                    document.getElementById("answer-type-select");
+
+                // 要素が存在する場合のみ処理を実行
+                if (ruleSelect && inputMethodSelect) {
+                    if (ruleSelect.value === "speed") {
+                        inputMethodSelect.disabled = true;
+                    } else {
+                        inputMethodSelect.disabled = false;
+                    }
+                }
+            }
+
+            // ページの読み込み完了時にイベントリスナーを登録し、初期状態を反映
+            window.addEventListener("DOMContentLoaded", () => {
+                const ruleSelect = document.getElementById("game-rule-select");
+                if (ruleSelect) {
+                    ruleSelect.addEventListener(
+                        "change",
+                        updateInputMethodDisabledState,
+                    );
+                    updateInputMethodDisabledState(); // 読み込み時の初期状態をセット
+                }
+            });
+        </script>
+    </body>
+</html>
