@@ -556,6 +556,38 @@ select,
         0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+/* 見えない（再出題）ボタン：明るいオレンジ系 */
+#invisible-btn {
+    background: linear-gradient(to bottom, #fff9e6 0%, #ffe0b2 100%);
+    color: #d97706;
+    border-color: #f6ad55;
+    box-shadow:
+        0 3px 0 #ed8936,
+        0 4px 4px rgba(0, 0, 0, 0.05);
+}
+#invisible-btn:active {
+    transform: translateY(3px);
+    box-shadow:
+        0 0px 0 #ed8936,
+        0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ゲームをやめるボタン：落ち着いたスレートグレー系 */
+#quit-btn {
+    background: linear-gradient(to bottom, #f1f5f9 0%, #e2e8f0 100%);
+    color: #475569;
+    border-color: #cbd5e1;
+    box-shadow:
+        0 3px 0 #94a3b8,
+        0 4px 4px rgba(0, 0, 0, 0.05);
+}
+#quit-btn:active {
+    transform: translateY(3px);
+    box-shadow:
+        0 0px 0 #94a3b8,
+        0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
 /* --- クイズ画面表示エリア --- */
 .image-container {
     position: relative;
@@ -802,6 +834,42 @@ select,
     #giveup-btn:active {
         box-shadow:
             0 0px 0 #2a0a0a,
+            0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ダークモード：見えない（再出題）ボタン */
+    #invisible-btn {
+        background: linear-gradient(to bottom, #422f18 0%, #2e2010 100%);
+        color: #ffb74d;
+        border-color: #5c3a1e;
+        box-shadow:
+            0 3px 0 #2e2010,
+            0 4px 4px rgba(0, 0, 0, 0.3);
+    }
+    #invisible-btn:hover {
+        background: linear-gradient(to bottom, #523a1f 0%, #3d2b16 100%);
+    }
+    #invisible-btn:active {
+        box-shadow:
+            0 0px 0 #2e2010,
+            0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ダークモード：ゲームをやめるボタン */
+    #quit-btn {
+        background: linear-gradient(to bottom, #2b3544 0%, #1e293b 100%);
+        color: #cbd5e1;
+        border-color: #0f172a;
+        box-shadow:
+            0 3px 0 #0f172a,
+            0 4px 4px rgba(0, 0, 0, 0.3);
+    }
+    #quit-btn:hover {
+        background: linear-gradient(to bottom, #334155 0%, #2b3544 100%);
+    }
+    #quit-btn:active {
+        box-shadow:
+            0 0px 0 #0f172a,
             0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
